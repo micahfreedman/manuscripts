@@ -722,6 +722,40 @@ summary(glht(adult.aspectratio.model1, mcp(Species="Tukey"))) #no significant pa
 
 
 
+####### load data for abdomen and thorax mass
+
+ab.thor.mass <- read.csv('~/Downloads/thorax_abdomen_mass.csv')
+
+head(ab.thor.mass)
+
+##merge with rest of adult data based on Cat..ID
+
+an.thor <- merge(ab.thor.mass, adults.lad, by = 'Cat.ID')
+
+drymass <- an.thor[an.thor$fresh=='yes',] #leaves behind 816 observations
+
+drymass$dry_mass_combined <- drymass$thorax + drymass$abdomen
+
+adult.drymass.model1 <- lmer(dry_mass_combined ~ Species + Mon.Pop + sym.allo + (1|Pop/Plant.ID) + (1|maternal_family)  + (1|Group)  + Usage + GH + scale(OE) + Sex.x + scale(exp.days), data = drymass)
+
+summary(adult.drymass.model1) #not much changes when using dry mass instead of eclosion mass: dataset is much smaller, but returns same inferences (no sym/allo effect, weak/modest population effects, males larger than females, GOPH produces largest butterflies)
+
+drymass$ab.thor.ratio <- drymass$thorax / drymass$abdomen
+
+adult.ab.thor.ratio.model1 <- lmer(ab.thor.ratio ~ Species + Mon.Pop + sym.allo + (1|Pop/Plant.ID) + (1|maternal_family)  + (1|Group)  + Usage + GH + scale(OE) + Sex.x + scale(exp.days) + scale(dry_mass_combined), data = drymass)
+
+summary(adult.ab.thor.ratio.model1) #males have a greater proportion of mass carried in their thorax, perhaps not surprisingly; OE influences the allocation of mass to abdomen versus thorax, with greater proportion of weight carried in the abdomen; larger butterflies have proportionally larger thoraxes compared to abdomens
+
+ggplot(drymass[!is.na(drymass$Species),], aes(x = dry_mass_combined, y = ab.thor.ratio))+
+  geom_point(aes(col = Mon.Pop))+
+  facet_wrap(~Species*Sex.x)+
+  geom_smooth(method = 'lm') #for all species, higher mass is associated with decreasing proportion of mass carried in the abdomen; applies for both males and females
+
+
+
+
+
+
 
 
 ###### Now generate figures for coefficient of variation in performance
