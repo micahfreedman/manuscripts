@@ -746,6 +746,33 @@ adult.ab.thor.ratio.model1 <- lmer(ab.thor.ratio ~ Species + Mon.Pop + sym.allo 
 
 summary(adult.ab.thor.ratio.model1) #males have a greater proportion of mass carried in their thorax, perhaps not surprisingly; OE influences the allocation of mass to abdomen versus thorax, with greater proportion of weight carried in the abdomen; larger butterflies have proportionally larger thoraxes compared to abdomens
 
+###check wing loading, using dry mass first
+
+drymass$dry.wl <- drymass$dry_mass_combined / drymass$MArea
+
+adult.dry.wl.ratio.model1 <- lmer(dry.wl ~ Species + Mon.Pop + sym.allo + (1|Pop/Plant.ID) + (1|maternal_family)  + (1|Group)  + Usage + GH + scale(OE) + Sex.x + scale(exp.days), data = drymass)
+
+summary(adult.dry.wl.ratio.model1)
+
+emmeans(adult.dry.wl.ratio.model1, 'Mon.Pop')
+
+summary(glht(adult.dry.wl.ratio.model1, mcp(Mon.Pop="Tukey"))) #no significant differences between populations for dry wing loading
+
+
+
+#with wet mass
+
+adults$wing.loading <- adults$emergence_weight / adults$MArea
+
+adult.wet.wl.ratio.model1 <- lmer(wing.loading ~ Species + Mon.Pop + sym.allo + (1|Pop/Plant.ID) + (1|maternal_family)  + (1|Group)  + Usage + GH + scale(OE) + Sex, data = adults)
+
+summary(adult.wet.wl.ratio.model1)
+
+emmeans(adult.wet.wl.ratio.model1, 'Mon.Pop')
+
+summary(glht(adult.wet.wl.ratio.model1, mcp(Mon.Pop="Tukey"))) #do indeed find differences among populations in wing loading for wet mass, although they don't correspond to migratory status, per se
+
+
 ggplot(drymass[!is.na(drymass$Species),], aes(x = dry_mass_combined, y = ab.thor.ratio))+
   geom_point(aes(col = Mon.Pop))+
   facet_wrap(~Species*Sex.x)+
