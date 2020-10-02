@@ -18,14 +18,14 @@ source("./RAFM.r")
 
 #now get into RAFM format
 
-Rgenos <- format_snps(formatted_monarch_snps, "rafm", facets = "pop", n_samp = 10000) #takes a few minutes to run with 10000 snps
+Rgenos <- format_snps(formatted_monarch_snps, "rafm", facets = "pop", n_samp = 1000) #takes a few minutes to run with 1000 snps
 
 table(Rgenos$pop)
 
 Rgenos.keep <- Rgenos[Rgenos$pop %in% c(1,12,3,4,7),]
 
 #get the coancestries
-RAFMall <- do.all(Rgenos.keep, 1000, 50, 25)  #specifies to use the 10000 snps, run analysis for 1000 iterations, with a burnin of 50 and sampling every 25 iterations
+RAFMall <- do.all(Rgenos.keep, 1000, 50, 25)  #specifies to use the 1000 snps, run analysis for 1000 iterations, with a burnin of 50 and sampling every 25 iterations
 #need to make sure plot window is large enough, or you get an error about plot.new() figure margins being too small, and everything is for naught
 
 
