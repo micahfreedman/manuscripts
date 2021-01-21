@@ -1,0 +1,48 @@
+                                            Area Percent Report
+
+  Data Path : D:\MassHunter\GCMS\1\data\Stachys_bullata\FINAL_RUNS\
+  Data File : SCI16.D                                             
+  Acq On    : 18 Mar 2020  03:56
+  Operator  : chemist-HP\admin
+  Sample    : SCI16
+  Misc      :  
+  ALS Vial  : 15   Sample Multiplier: 1
+
+  Integration Parameters: rteint.p
+  Integrator: RTE
+  Smoothing : ON                             Filtering: 5
+  Sampling  : 1                               Min Area: 50000 Area counts
+  Start Thrs: 0.2                            Max Peaks: 120
+  Stop Thrs : 0                          Peak Location: TOP     
+
+  If leading or trailing edge < 100 prefer < Baseline drop else tangent >
+  Peak separation: 5
+
+  Method    : D:\MassHunter\GCMS\1\methods\abronia_calibration.M
+  Title     :  
+
+  Signal     : TIC: SCI16.D\data.ms
+
+ peak  R.T. first  max last  PK   peak      corr.   corr.    % of
+   #   min   scan scan scan  TY  height     area    % max.   total
+ ---  ----- ----- ---- ---- ---  -------   -------  ------  -------
+  1   4.741   282  289  304 rVB    23274     55067   3.57%   1.057%
+  2  10.754  1332 1340 1358 rBV    88607    207144  13.45%   3.975%
+  3  12.242  1586 1600 1614 rBV3   20721     50658   3.29%   0.972%
+  4  15.859  2221 2232 2248 rVB   128775    304973  19.80%   5.853%
+  5  34.467  5475 5484 5495 rVB2   68231    174359  11.32%   3.346%
+ 
+  6  37.705  6042 6050 6059 rVB6   24816     65308   4.24%   1.253%
+  7  37.843  6062 6074 6092 rBV2  523106   1540515 100.00%  29.564%
+  8  38.152  6113 6128 6157 rBV4  294145   1422679  92.35%  27.302%
+  9  41.682  6733 6745 6754 rBV3  108530    425803  27.64%   8.172%
+ 10  42.815  6940 6943 6949 rBV   101833    138554   8.99%   2.659%
+ 
+ 11  43.193  7006 7009 7025 rVB6   95719    167148  10.85%   3.208%
+ 12  43.874  7124 7128 7147 rVB   218990    445738  28.93%   8.554%
+ 13  44.286  7197 7200 7214 rVB7   99189    212861  13.82%   4.085%
+ 
+ 
+                        Sum of corrected areas:     5210807
+
+abronia_calibration.M Fri Jun 12 16:45:08 2020   

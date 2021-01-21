@@ -1,0 +1,47 @@
+                                            Area Percent Report
+
+  Data Path : D:\MassHunter\GCMS\1\data\Stachys_bullata\FINAL_RUNS\
+  Data File : SRI12.D                                             
+  Acq On    : 18 Mar 2020  05:53
+  Operator  : chemist-HP\admin
+  Sample    : SRI12
+  Misc      :  
+  ALS Vial  : 17   Sample Multiplier: 1
+
+  Integration Parameters: rteint.p
+  Integrator: RTE
+  Smoothing : ON                             Filtering: 5
+  Sampling  : 1                               Min Area: 50000 Area counts
+  Start Thrs: 0.2                            Max Peaks: 120
+  Stop Thrs : 0                          Peak Location: TOP     
+
+  If leading or trailing edge < 100 prefer < Baseline drop else tangent >
+  Peak separation: 5
+
+  Method    : D:\MassHunter\GCMS\1\methods\abronia_calibration.M
+  Title     :  
+
+  Signal     : TIC: SRI12.D\data.ms
+
+ peak  R.T. first  max last  PK   peak      corr.   corr.    % of
+   #   min   scan scan scan  TY  height     area    % max.   total
+ ---  ----- ----- ---- ---- ---  -------   -------  ------  -------
+  1   4.735   280  288  304 rVB    32228     72765   2.99%   1.408%
+  2  10.760  1333 1341 1357 rBV4   22217     59441   2.44%   1.150%
+  3  12.242  1590 1600 1612 rBV    21365     52623   2.16%   1.018%
+  4  15.864  2222 2233 2246 rVB2  135008    325312  13.35%   6.296%
+  5  34.466  5475 5484 5493 rVB4   40543    108989   4.47%   2.109%
+ 
+  6  37.842  6061 6074 6090 rBV2  329509    959056  39.35%  18.560%
+  7  38.146  6111 6127 6158 rBV3  479164   2437497 100.00%  47.172%
+  8  42.231  6838 6841 6849 rBV8   49655     89571   3.67%   1.733%
+  9  42.815  6940 6943 6948 rBV2   69434    115620   4.74%   2.238%
+ 10  43.187  7005 7008 7017 rBV2  119622    211245   8.67%   4.088%
+ 
+ 11  43.873  7124 7128 7139 rVB   219609    383711  15.74%   7.426%
+ 12  44.285  7196 7200 7219 rVB4  148930    351392  14.42%   6.800%
+ 
+ 
+                        Sum of corrected areas:     5167222
+
+abronia_calibration.M Fri Jun 12 16:53:25 2020   

@@ -1,0 +1,80 @@
+﻿RT,Compound,Header_Compound,Compound_Class
+8.506,alpha-phellandrene,RT_8.506_alpha_phellandrene,monoterpene
+8.695,R-alpha-pinene,RT_8.695_R_alpha_pinene,monoterpene
+9.152,camphene,RT_9.152_camphene,monoterpene
+9.547,benzaldehyde,RT_9.547_benzaldehyde,aromatic
+9.993,sabinene,RT_9.993_sabinene,monoterpene
+10.056,beta-pinene,RT_10.056_beta_pinene,monoterpene
+10.245,3-octenol,RT_10.245_3_octenol,aliphatic
+10.486,"3,5-dimethyl-2-octanone",RT_10.486_3_5_dimethyl_2_octanone,aliphatic
+10.611,beta-myrcene,RT_10.611_beta_myrcene,monoterpene
+10.754,3-octanol,RT_10.754_3_octanol,aliphatic
+10.997,alpha-phellandrene,RT_10.997_alpha_phellandrene,monoterpene
+11.166,carene,RT_11.166_carene,monoterpene
+11.567,o-cymene,RT_11.567_o_cymene,monoterpene
+11.641,beta-cymene,RT_11.641_beta_cymene,monoterpene
+11.773,d-limonene,RT_11.773_d_limonene,monoterpene
+11.939,benzyl alcohol,RT_11.939_benzyl_alcohol,aromatic
+12.133,trans-beta-ocimene,RT_12.133_trans_beta_ocimene,monoterpene
+12.242,alpha-tolualdehyde,RT_12.242_alpha_tolualdehyde,aromatic
+12.448,cis-beta-ocimene,RT_12.448_cis_beta_ocimene,monoterpene
+12.667,norpinene?,RT_12.667_norpinene,monoterpene
+12.746,crithmene,RT_12.746_crithmene,monoterpene
+13.158,1-octanol,RT_13.158_1_octanol,aliphatic
+14.056,linalool,RT_14.056_linalool,monoterpene
+14.422,phenylethyl alcohol,RT_14.422_phenylethyl_alcohol,aromatic
+14.96,allo-ocimene,RT_14.96_allo_ocimene,monoterpene
+15.864,internal standard (tetralin),RT_15.864_internal_standard_tetralin,standard
+16.076,unknown compound,RT_16.076_unknown_compound,unknown
+17.317,"2,6-Dimethyl-3,5,7-octatriene-2-ol, ,E,E- (?)",RT_17.317_2_6_Dimethyl_3_5_7_octatriene_2_ol,monoterpene
+18.256,beta-citral,RT_18.256_beta_citral,monoterpene
+18.645,trans-geraniol,RT_18.645_trans_geraniol,monoterpene
+19.097,alpha-citral,RT_19.097_alpha_citral,monoterpene
+19.137,1-undecanol (?),RT_19.137_1_undecanol,aliphatic
+19.217,"1-methyl-2-methylene-3,5-divinylcyclohexane",RT_19.217_1_methyl_2_methylene_3_5_divinylcyclohexane,unknown
+20.121,4-Hydroxy-2-methylacetophenone (?),RT_20.121_4_Hydroxy_2_methylacetophenone,aromatic
+20.35,unknown compound,RT_20.35_unknown compound,unknown
+20.579,methyl geranate,RT_20.579_methyl_geranate,monoterpene
+20.968,elixene,RT_20.968_elixene,sesquiterpene
+21.323,4-methoxy-acetophenone (?),RT_21.323_4_methoxy_acetophenone,aromatic
+21.472,eugenol,RT_21.472_eugenol,aromatic
+22.004,alpha-cubebene (?),RT_22.004_alpha_cubebene,sesquiterpene
+22.25,beta-bourbonene (?),RT_22.25_beta_bourbonene,sesquiterpene
+22.433,beta-elemene,RT_22.433_beta_elemene,sesquiterpene
+22.897,methyl-9-dodecenoate,RT_22.897_methyl_9_dodecenoate,aliphatic
+23.148,beta-carophyllene,RT_23.148_beta_carophyllene,sesquiterpene
+23.24,unknown compound,RT_23.24_unknown_compound,unknown
+23.394,"unknown sesquiterpene (3a,7-Methano-3aH-cyclopentacyclooctene, 1,4,5,6,7,8,9,9a-octahydro-1,1,7-trimethyl-, [3aR-(3a.alpha.,7.alpha.,9a.beta.)]-)",RT_23.394_unknown_sesquiterpene,sesquiterpene
+23.554,alpha-bergamotene,RT_23.554_alpha_bergamotene,sesquiterpene
+23.64,caryophyllene oxide (?),RT_23.64_caryophyllene_oxide,sesquiterpene
+23.732,"beta-sesquiphellandrene (??) Cyclohexene, 3-(1,5-dimethyl-4-hexenyl)-6-methylene-, [S-(R*,S*)]-",RT_23.732_beta_sesquiphellandrene,sesquiterpene
+24.018,alpha-caryophyllene (?),RT_24.018_alpha_caryophyllene,sesquiterpene
+24.064,"E-beta-farnesene (??) 1,6,10-Dodecatriene, 7,11-dimethyl-3-methylene-, (Z)-",RT_24.064_E_beta_farnesene,sesquiterpene
+24.464,"7-Hexadecene, (Z)- (?)",RT_24.464_Z_7_Hexadecene,aliphatic
+24.716,germacrene-D / beta-cubebene,RT_24.716_germacrene_D,sesquiterpene
+25.014,"alpha-farnesene (1,3,6,10-Dodecatetraene, 3,7,11-trimethyl-, (Z,E)-) (??)",RT_25.014_alpha_farnesene,sesquiterpene
+25.105,elixene,RT_25.105_elixene,sesquiterpene
+25.34,alpha-farnesene,RT_25.34_alpha_farnesene,sesquiterpene
+25.368,"beta-bisabolene (??) (Cyclohexene, 1-methyl-4-(5-methyl-1-methylene-4-hexenyl)-, (S)-)",RT_25.368_beta_bisabolene,sesquiterpene
+25.523,"gamma-muurolene (?) (Naphthalene, 1,2,3,4,4a,5,6,8a-octahydro-7-methyl-4-methylene-1-(1-methylethyl)-, (1.alpha.,4a.alpha.,8a.alpha.)-)",RT_25.523_gamma_muurolene,sesquiterpene
+25.678,hedycaryol,RT_25.678_hedycaryol,sesquiterpene
+25.741,"d-cadinene (?) (Naphthalene, 1,2,3,5,6,8a-hexahydro-4,7-dimethyl-1-(1-methylethyl)-, (1S-cis)-)",RT_25.741_d_cadinene,sesquiterpene
+26.358,elemol,RT_26.358_elemol,sesquiterpene
+26.667,cis-farnesol,RT_26.667_cis_farnesol,sesquiterpene
+26.713,trans-nerolidol,RT_26.713_trans_nerolidol,sesquiterpene
+26.999,germacren-D-4-ol,RT_26.999_germacren_D_4_ol,sesquiterpene
+27.045,(-)-spathulenol,RT_27.045_spathulenol,sesquiterpene
+27.789,alpha-fenchene (?),RT_27.789_alpha_fenchene,sesquiterpene
+30.33,isoaromadendre epoxide,RT_30.33_isoaromadendre_epoxide,sesquiterpene
+30.747,isoaromadendre epoxide,RT_30.747_isoaromadendre_epoxide,sesquiterpene
+30.839,alpha-bulnesene (??),RT_30.839_alpha_bulnesene,sesquiterpene
+31.182,isoaromadendre epoxide,RT_31.182_isoaromadendre_epoxide,sesquiterpene
+31.794,alpha-copaenol,RT_31.794_alpha_copaenol,sesquiterpene
+32.063,isoaromadendre epoxide,RT_32.063_isoaromadendre_epoxide,sesquiterpene
+32.441,unknown compound,RT_32.441_unknown_compound,unknown
+32.704,unknown compound,RT_32.704_unknown_compound,unknown
+33.419,isoaromadendre epoxide,RT_33.419_isoaromadendre_epoxide,sesquiterpene
+33.62,"3-Tetradecene, (E)- (?)",RT_33.62_E_3_Tetradecene,aliphatic
+34.467,"Pentadecanoic acid, 14-methyl-, methyl ester (?)",RT_34.467_Pentadecanoic_acid,aliphatic
+37.843,methyl linoleate,RT_37.843_methyl_linoleate,aliphatic
+38.141,phytol,RT_38.141_phytol,non-volatile
