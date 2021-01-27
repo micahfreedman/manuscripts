@@ -347,7 +347,7 @@ hist(spine.data$spines)
 
 #first define dataframe: omit SBBG and RSA as sites, and run na.omit to drop all NA values for spinescence (these result from instances where there was >10% herbivory)
 
-spine.data.model <- na.omit(spine.data[!spine.data$Site %in% c('RSA','SBBG'),])
+spine.data.model <- spine.data[!spine.data$Site %in% c('RSA','SBBG'),]
 
 model_leaf_spines = lmer(spines ~ IM*Position + (IM|Species) + (1|Site/plant.ID/branch.ID) + scale(Aspect.N) + scale(Aspect.E), data = spine.data.model) #
 
@@ -384,11 +384,11 @@ emm.spines <- emmeans(model_leaf_spines, specs = pairwise ~ IM*Position, type = 
 emm.spines <- data.frame(emm.spines[[2]])
 
 #pdf('./figures/Fig2d.pdf', height = 6, width = 4)
-ggplot(emm.spines, aes(x = Position, y = emmean, group = IM, col = IM))+
+ggplot(emm.spines, aes(x = Position, y = estimate, group = IM, col = IM))+
   theme_bw(base_size = 16)+
   geom_point(size = 4, pch = 22, aes(fill = IM), col = 'black')+
   geom_line(size = 1)+
-  geom_errorbar(aes(ymin = emmean - SE, ymax = emmean + SE), width = 0.2, size = 1)+
+  geom_errorbar(aes(ymin = estimate - SE, ymax = estimate + SE), width = 0.2, size = 1)+
   scale_color_manual(values = c('blue','red'))+
   scale_fill_manual(values = c('blue','red'))+
   xlab('Canopy Position')+
@@ -560,11 +560,234 @@ cng.catalina.model = aggregate(Tissue.Concentration ~ IM + Age + Species + plant
 
 summary(lmer(Tissue.Concentration ~ Exclosure + Age + (Exclosure|Species) + (1|plant.ID), data = cng.catalina.model)) #no difference inside versus outside of exclosures, but young tissue has higher concentrations, as expected
 
-######
 
-ag1 = aggregate(True_area ~ branch.ID + plant.ID + Species + IM + Site + Position, data = insitu.leaf.data, mean)
-ag2 = aggregate(True_area ~ plant.ID + Species + IM + Site, data = ag1, mean)
-ag3 = aggregate(True_area ~ Species + IM + Site, ag2, mean)
+########
 
-summary(lmer(True_area ~ IM + (IM|Species) + (1|Site), data = ag3)) #recapitulates, almost exactly, the effect size from the more complicated nested model
-summary(lmer(True_area ~ IM + Species + (1|Site), data = ag3)) 
+##Herbivory data
+
+hist(leaf.data$Herbivory) #strongly zero-inflated, probably makes sense to start using a negative binomial (?) distribution as a first pass
+
+leaf.data$Herbivory.binom <- ifelse(leaf.data$Herbivory > 0, 1, 0 )
+
+Herbivory.model <- glmer(Herbivory.binom ~ IM + Aspect.N + Aspect.E + Position + (IM|Species) + (1|Site/plant.ID/branch.ID), family = 'binomial', leaf.data)
+
+summary(Herbivory.model) #no indication that island plants are any more likely to have evidence of herbivory; only significant model term suggests that leaves on westward facing aspects are more likely to experience herbivory
+
+#####
+
+#get effect size measurements for all traits
+
+#start with leaf area
+
+library(effectsize)
+
+cohens_d(leaf.area.agg$True_area, leaf.area.agg$IM) #overall effect size for insularity: 0.60, with 95% confidence intervals between 0.36-0.83; don't actually report this value, though, since it averages all species and pools their variances in a way that doesn't account for small differences in sample sizes across island vs. mainland sites
+
+output <- matrix(ncol = 3, nrow = 5)
+for(i in 1:length(levels(leaf.area.agg$Species))){
+  species <- levels(leaf.area.agg$Species)[i]
+  cohd <- cohens_d(leaf.area.agg[leaf.area.agg$Species==species,]$True_area, leaf.area.agg[leaf.area.agg$Species==species,]$IM)
+  output[i,] <- c(cohd[[1]], cohd[[3]], cohd[[4]])
+}
+
+plot.cohd.1 <- data.frame('species' = levels(leaf.area.agg$Species), 'cohens_D' = output[,1],
+                        'lower_CI' = output[,2], 'upper_CI' = output[,3], 'location' = 'IS')
+
+#Ceanothus: 1.58, 0.97-2.18
+#Cercocarpus: 0.99, 0.39-1.57
+#Dendromecon: 1.37, 0.75-1.98
+#Heteromeles: 0.60, 0.10-1.10
+#Prunus: 1.86, 1.24-2.47
+
+#now for common garden
+
+leaf.area.cg.agg <- aggregate(True_area ~ Source.IM + Species + plant.ID, data = common.gardens, mean)
+
+cohens_d(True_area ~ Source.IM, data = leaf.area.cg.agg)
+#get nearly identical effect size, but with wider confidence intervals: 0.59, (-0.05) - (1.22)
+
+output <- matrix(ncol = 3, nrow = 5)
+for(i in 1:length(levels(leaf.area.cg.agg$Species))){
+  species <- levels(leaf.area.cg.agg$Species)[i]
+  cohd <- cohens_d(True_area ~ Source.IM, data = leaf.area.cg.agg[leaf.area.cg.agg$Species==species,])
+  output[i,] <- c(cohd[[1]], cohd[[3]], cohd[[4]])
+}
+
+plot.cohd.2 <- data.frame('species' = levels(leaf.area.agg$Species), 'cohens_D' = output[,1],
+                          'lower_CI' = output[,2], 'upper_CI' = output[,3], 'location' = 'CG')
+
+#Ceanothus: 1.12, (-0.57) - (1.12)
+#Cercocarpus: -0.27, (-1.65, 1.14)
+#Dendromecon: -0.03, (-1.73, 1.67)
+#Heteromeles: 0.21, (-1.12, 1.52)
+#Prunus: 3.09, (1.12, 4.99)
+
+plot.cohd <- rbind(plot.cohd.1, plot.cohd.2)
+
+pdf('./figures/test.Fig.3a.pdf', width = 9, height = 4)
+ggplot(plot.cohd, aes(x = location, y = cohens_D, col = location))+
+  geom_hline(yintercept = 0)+
+  geom_errorbar(aes(ymin = lower_CI, ymax = upper_CI), width = 0.1, size = 1)+
+  geom_point(size = 4, pch = 21, col = 'black', aes(fill = location))+
+  theme_bw(base_size = 16)+
+  facet_wrap(~species, nrow = 1)+
+  theme(legend.position = 'none', axis.title.x = element_blank())+
+  ylab('Insularity Effect Size (Leaf Area)')+
+  scale_color_manual(values = c('purple','dodgerblue'))+
+  scale_fill_manual(values = c('purple','dodgerblue'))+
+  theme(strip.text = element_text(size=16, face = 'italic'))+
+  ylim(c(-2,5.5))
+dev.off()
+
+#### now do effect size for SLA
+
+cohens_d(SLA ~ IM, data = sla.agg)
+#effect size is 0.23, with CIs of 0.00-0.47
+
+calc_cohens_d <- function(dataset, response, comparison) {
+  for(i in 1:length(levels(dataset$Species))){
+    species <- dataset$Species[i]
+    cohenD <- cohens_d(response ~ comparison, data = dataset)
+    print(cohenD)
+  }
+}
+
+calc_cohens_d(dataset = sla.agg, response = SLA, comparison = IM)
+
+output <- matrix(ncol = 3, nrow = 5)
+for(i in 1:length(levels(sla.agg$Species))){
+  species <- levels(sla.agg$Species)[i]
+  cohd <- cohens_d(SLA ~ IM, data = sla.agg[sla.agg$Species==species,])
+  output[i,] <- c(cohd[[1]], cohd[[3]], cohd[[4]])
+}
+#Ceanothus: 0.90, 0.34-1.46
+#Cercocarpus: 0.53, -0.04-1.09
+#Dendromecon: 0.00, -0.55 - 0.57
+#Heteromeles: 0.11, -0.38 - 0.61
+#Prunus: 0.65, 0.12 - 1.17
+
+plot.cohd.sla <- data.frame('species' = levels(sla.agg$Species), 'cohens_D' = output[,1],
+                            'lower_CI' = output[,2], 'upper_CI' = output[,3], 'location' = 'IS')
+
+pdf('./figures/test.Fig.3b.pdf', width = 9, height = 4)
+ggplot(plot.cohd.sla, aes(x = location, y = cohens_D))+
+  geom_hline(yintercept = 0)+
+  geom_errorbar(aes(ymin = lower_CI, ymax = upper_CI), width = 0.1, size = 1, col = 'purple')+
+  geom_point(size = 4, pch = 21, col = 'black', fill = 'purple')+
+  theme_bw(base_size = 16)+
+  facet_wrap(~species, nrow = 1)+
+  theme(legend.position = 'none', axis.title.x = element_blank())+
+  ylab('Insularity Effect Size (SLA)')+
+  theme(strip.text = element_text(size=16, face = 'italic'))+
+  ylim(c(-1,2))
+dev.off()
+
+#no comparable measurements for common garden plants for SLA
+
+#### Now for spinescence
+
+cohens_d(spines ~ IM, data = spines.agg)
+#Much stronger overall effect: -1.73, (-2.19) - (-1.27)
+output <- matrix(ncol = 3, nrow = 2)
+for(i in 4:5){
+  species <- levels(spines.agg$Species)[i]
+  cohd <- cohens_d(spines ~ IM, data = spines.agg[spines.agg$Species==species,])
+  output[i-3,] <- c(cohd[[1]], cohd[[3]], cohd[[4]])
+}
+
+plot.cohd.1.spines <- data.frame('species' = levels(spines.agg$Species)[4:5], 'cohens_D' = output[,1],
+                                 'lower_CI' = output[,2], 'upper_CI' = output[,3], 'location' = 'IS')
+
+#Heteromeles: -1.61, (-2.21) - (-1.01)
+#Prunus: -3.40, (-4.34) - (-2.44)
+
+spines.common.garden.agg <- aggregate(spines ~ Source.IM + Species + plant.ID, data = spines.common.garden, mean)
+
+output <- matrix(ncol = 3, nrow = 2)
+for(i in 4:5){
+  species <- levels(spines.common.garden.agg$Species)[i]
+  cohd <- cohens_d(spines ~ Source.IM, data = 
+                     spines.common.garden.agg[spines.common.garden.agg$Species==species,])
+  output[i-3,] <- c(cohd[[1]], cohd[[3]], cohd[[4]])
+}
+
+plot.cohd.2.spines <- data.frame('species' = levels(spines.agg$Species)[4:5], 'cohens_D' = output[,1],
+                                 'lower_CI' = output[,2], 'upper_CI' = output[,3], 'location' = 'CG')
+
+#Heteromeles: -0.23, (-1.54) - (1.10)
+#Prunus: -4.36, (-6.77) - (-1.90)
+
+plot.cohd.spines <- rbind(plot.cohd.1.spines, plot.cohd.2.spines)
+
+pdf('./figures/test.Fig.3c.pdf', width = 4, height = 4)
+ggplot(plot.cohd.spines, aes(x = location, y = cohens_D, col = location))+
+  geom_hline(yintercept = 0)+
+  geom_errorbar(aes(ymin = lower_CI, ymax = upper_CI), width = 0.1, size = 1)+
+  geom_point(size = 4, pch = 21, col = 'black', aes(fill = location))+
+  theme_bw(base_size = 16)+
+  facet_wrap(~species, nrow = 1)+
+  theme(legend.position = 'none', axis.title.x = element_blank())+
+  ylab('Insularity Effect Size (Spinescence)')+
+  scale_color_manual(values = c('purple','dodgerblue'))+
+  scale_fill_manual(values = c('purple','dodgerblue'))+
+  theme(strip.text = element_text(size=16, face = 'italic'))+
+  ylim(c(-9,3))
+dev.off()
+
+#and finally, do the same for cyanogenic glycosides
+
+cyanide.in.situ <- cyanide[!cyanide$Source %in% c('SBBG','RSA'),]
+
+cyanide.agg <- aggregate(Tissue.Concentration ~ IM + Species + PlantID, mean, data = cyanide.in.situ) #leaves observations from 87 individual plants
+
+cohens_d(Tissue.Concentration ~ IM, data = cyanide.agg)
+#substantially negative: -0.89, (-1.33) - (-0.43)
+
+cohens_d(Tissue.Concentration ~ IM, data = cyanide.agg[cyanide.agg$Species=='Heteromeles',])
+#for Heteromeles: -1.05, (-1.70) - (-0.38)
+cohens_d(Tissue.Concentration ~ IM, data = cyanide.agg[cyanide.agg$Species=='Prunus',])
+#for Prunus: -1.34, (-1.34) - (-0.67)
+
+cyanide.agg.cg <- aggregate(Tissue.Concentration ~ PlantID + Species + IM, data = cyanide[cyanide$Source %in% c('SBBG','RSA'),], mean) #21 observations
+
+cohens_d(Tissue.Concentration ~ IM, data = cyanide.agg.cg[cyanide.agg.cg$Species=='Heteromeles',])
+#still get pretty pronounced effect size for Heteromeles: -0.98, (-2.30) - (0.40)
+cohens_d(Tissue.Concentration ~ IM, data = cyanide.agg.cg[cyanide.agg.cg$Species=='Prunus',])
+#and even stronger for Prunus: -1.77, (-3.17) - (-0.30)
+
+output <- matrix(ncol = 3, nrow = 2)
+for(i in 2:3){
+  species <- levels(cyanide.agg$Species)[i]
+  cohd <- cohens_d(Tissue.Concentration ~ IM, data = cyanide.agg[cyanide.agg$Species==species,])
+  output[i-1,] <- c(cohd[[1]], cohd[[3]], cohd[[4]])
+}
+
+plot.cohd.1.cng <- data.frame('species' = levels(cyanide.agg$Species)[2:3], 'cohens_D' = output[,1],
+                                 'lower_CI' = output[,2], 'upper_CI' = output[,3], 'location' = 'IS')
+
+output <- matrix(ncol = 3, nrow = 2)
+for(i in 2:3){
+  species <- levels(cyanide.agg.cg$Species)[i]
+  cohd <- cohens_d(Tissue.Concentration ~ IM, data = cyanide.agg.cg[cyanide.agg.cg$Species==species,])
+  output[i-1,] <- c(cohd[[1]], cohd[[3]], cohd[[4]])
+}
+
+plot.cohd.2.cng <- data.frame('species' = levels(cyanide.agg$Species)[2:3], 'cohens_D' = output[,1],
+                              'lower_CI' = output[,2], 'upper_CI' = output[,3], 'location' = 'CG')
+
+plot.cohd.cng <- rbind(plot.cohd.1.cng, plot.cohd.2.cng)
+
+pdf('./figures/test.Fig.3d.pdf', width = 4, height = 4)
+ggplot(plot.cohd.cng, aes(x = location, y = cohens_D, col = location))+
+  geom_hline(yintercept = 0)+
+  geom_errorbar(aes(ymin = lower_CI, ymax = upper_CI), width = 0.1, size = 1)+
+  geom_point(size = 4, pch = 21, col = 'black', aes(fill = location))+
+  theme_bw(base_size = 16)+
+  facet_wrap(~species, nrow = 1)+
+  theme(legend.position = 'none', axis.title.x = element_blank())+
+  ylab('Insularity Effect Size (CNglc Conc.)')+
+  scale_color_manual(values = c('purple','dodgerblue'))+
+  scale_fill_manual(values = c('purple','dodgerblue'))+
+  theme(strip.text = element_text(size=16, face = 'italic'))+
+  ylim(c(-4,1))
+dev.off()

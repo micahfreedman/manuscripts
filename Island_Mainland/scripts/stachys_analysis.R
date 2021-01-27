@@ -174,8 +174,9 @@ stachys_biomass$total_mass <- with(stachys_biomass, (Cumulative_Mass - Bag_Mass)
 
 sbbg_stachys_biomass <- stachys_biomass[stachys_biomass$Garden == 'SBBG',] #filter out biomass records from the SCI garden
 
+pdf(file = './figures/Fig6a.pdf', height = 6, width = 5)
 ggplot(sbbg_stachys_biomass, aes(x = Population, y = total_mass))+
-  geom_boxplot(aes(fill = Population), alpha = 0.3)+
+  geom_boxplot(aes(fill = Population), alpha = 0.3, outlier.color = 'white')+
   geom_point(aes(fill = Population), col = 'black', pch = 21, position = position_jitterdodge(1))+
   facet_wrap(~Year)+
   scale_fill_manual(values = c('darkorange4','orange', 'red','gold', 'blue','darkblue'))+
@@ -184,7 +185,7 @@ ggplot(sbbg_stachys_biomass, aes(x = Population, y = total_mass))+
                                  axis.text.x = element_text(angle = 60, hjust = 1))+
   theme(legend.position = 'none')+
   ylab('Aboveground Dry Biomass (g)')
-
+dev.off()
 
 ####
 
@@ -193,4 +194,49 @@ stbu_model <- lmer(total_mass ~ IM + (1|Population/Genotype) + Year + (1|Row) + 
 summary(stbu_model) #Strong year effects (not surprising given supplemental watering in 2016), and decent island/mainland effect, such that island plants generally had higher biomass 
 
 emmeans(stbu_model, specs = pairwise ~ IM + Year, type = "response")
+
+######
+
+#now also analyze SLA
+
+stachys.sla <- read.csv('./data_files/sla_sbbg.csv')
                                    
+head(stachys.sla)
+names(stachys.sla)[1] <- 'Index'
+
+stachys.sla <- merge(stachys.sla, stachys_sbbg, by = 'Index')
+stachys.sla$Population <- sub("_", " ", stachys.sla$Population)
+stachys.sla$Population <- factor(stachys.sla$Population, c('Gaviota','El Capitan','Santa Monicas','Zuma','Santa Cruz','Santa Rosa'))
+
+pdf(file = './figures/Fig6b.pdf', height = 6, width = 3)
+ggplot(stachys.sla[stachys.sla$Garden == 'SBBG' & stachys.sla$Year==2017,], 
+       aes(x = Population, y = SLA))+
+  geom_boxplot(aes(fill = Population), alpha = 0.3, outlier.colour = 'white')+
+  geom_point(aes(fill = Population), col = 'black', pch = 21, position = position_jitterdodge(1))+
+  scale_fill_manual(values = c('darkorange4','orange', 'red','gold', 'blue','darkblue'))+
+  scale_color_manual(values = c('darkorange4','orange', 'red','gold', 'blue','darkblue'))+
+  theme_bw(base_size = 16)+theme(axis.title.x = element_blank(),
+                                 axis.text.x = element_text(angle = 60, hjust = 1))+
+  theme(legend.position = 'none')+
+  labs(y = expression ('Specific Leaf Area'~(cm^2/g)))+
+  ylim(c(1.25,4))
+dev.off()
+
+stachys.sla$IM <- ifelse(stachys.sla$Population %in% c('Santa Cruz', 'Santa Rosa'), 'Island',"Mainland")
+
+model_stachys_sla <- lmer(SLA ~ IM + (1|Population/Genotype) + (1|Row) + (1|Column) + leaves, data = stachys.sla[stachys.sla$Garden == 'SBBG' & stachys.sla$Year==2017,]) #includes # of leaves as a covariate (vast majority of samples had 6 leaves sampled, but a few had 8)
+
+summary(model_stachys_sla) #island plants have significantly higher SLA
+#now plot SLA for Santa Cruz genotypes from the island versus the mainland
+
+ggplot(stachys.sla[stachys.sla$Year==2017 & stachys.sla$Population=='Santa Cruz',],
+       aes(x = Garden, y = SLA, col = Garden, fill = Garden))+
+  geom_boxplot(alpha = 0.2, outlier.color = 'white')+
+  geom_point()+
+  geom_line(aes(group = plant.ID), col = 'black', lty = 2)+
+  scale_color_manual(values = c('blue','dodgerblue'))+
+  scale_fill_manual(values = c('blue','dodgerblue'))
+
+## plants grown on SCI had substantially lower SLA, probably due to receiving less water and being in generally much drier soil
+
+
