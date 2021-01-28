@@ -5,6 +5,7 @@ library(vegan)
 library(plotly)
 library(plyr)
 library(emmeans)
+library(lme4)
 
 setwd('~/Documents/GitHub/Sites/manuscripts/Island_Mainland/')
 
@@ -46,12 +47,12 @@ stressplot(stachys_NMDS)
 
 nmds.data.scores <- as.data.frame(cbind((stachys_standardized[stachys_standardized$Site=='SBBG',c(1:4)]),scores(stachys_NMDS)))
 
-pdf('./figures/Fig4b.pdf', height = 4, width = 6)
+#pdf('./figures/Fig4b.pdf', height = 4, width = 6)
 ggplot(nmds.data.scores, aes(x = NMDS1, y = NMDS2))+
   geom_point(aes(fill = Population), size = 4, pch = 21)+
   theme_classic(base_size = 16)+
   scale_fill_manual(values = c('darkorange4','orange', 'red','gold', 'blue','darkblue'))
-dev.off()
+#dev.off()
 
 #test with only mainland populations
 
@@ -65,7 +66,7 @@ ggplot(nmds.data.scores2, aes(x = NMDS1, y = NMDS2))+
   geom_point(aes(fill = Population), size = 4, pch = 21)+
   theme_bw(base_size = 16)+
   scale_fill_manual(values = c('darkorange4','orange', 'red','gold')) #no obvious separation based on population of origin for mainland samples; instead, all seem to be composed of basically the same subset of compounds
-dev.off()
+
 
 ## make plot of cumulative emission levels
 
@@ -123,7 +124,7 @@ zum$Population <- 'Zuma'
 chromatograms.stachys <- rbind(elcap, gav, sci, smm, sri, zum)
 chromatograms.stachys$Population <- factor(chromatograms.stachys$Population, c('Gaviota','El Capitan','Santa Monicas','Zuma','Santa Cruz','Santa Rosa'))
 
-pdf('./figures/Fig4a.pdf', height = 9, width = 6)
+#pdf('./figures/Fig4a.pdf', height = 9, width = 6)
 ggplot(chromatograms.stachys[chromatograms.stachys$RT < 40,], aes(x = RT, y = value))+
   theme_dark(base_size = 10)+
   geom_line(aes(col = Population), size = 0.3)+
@@ -133,7 +134,7 @@ ggplot(chromatograms.stachys[chromatograms.stachys$RT < 40,], aes(x = RT, y = va
   ylab('Signal Intensity')+
   xlab('Retention Time (Minutes)')+
   theme(strip.text = element_text(size = 13))
-dev.off()
+#dev.off()
 
 #### final comparison: SCI genotypes grown at SBBG versus on SCI
 
@@ -141,14 +142,14 @@ sci_NMDS<-metaMDS(comm=stachys_standardized[stachys_standardized$Population=='Sa
 
 sci.nmds.data.scores <- as.data.frame(cbind((stachys_standardized[stachys_standardized$Population=='Santa Cruz',1:4]),scores(sci_NMDS)))
 
-pdf("./figures/Supplemental_Figures/Figure.Sx.pdf", height = 4, width = 4)
+#pdf("./figures/Supplemental_Figures/Figure.Sx.pdf", height = 4, width = 4)
 ggplot(sci.nmds.data.scores, aes(x = NMDS1, y = NMDS2, shape = Site, fill = Site))+
   geom_point(size = 4)+
   scale_fill_manual(values = c('blue','cyan'))+
   scale_shape_manual(values = c(21,22))+
   theme_bw(base_size = 16)+
   theme(legend.position = 'bottom', legend.title = element_blank()) #no differentiation between SCI genotpyes grown on Santa Cruz versus on the mainland
-dev.off()
+#dev.off()
 
 ####
 
@@ -166,7 +167,7 @@ head(stachys_biomass)
 
 stachys_biomass$IM <- ifelse(stachys_biomass$Population %in% c('Santa_Rosa','Santa_Cruz'), 'Island','Mainland')
 
-stachys_biomass$Population = factor(stachys_biomass$Population, levels=c("El_Capitan","Gaviota","Santa_Monicas","Zuma","Santa_Cruz","Santa_Rosa"))
+stachys_biomass$Population = factor(stachys_biomass$Population, levels=c("Gaviota","El_Capitan","Santa_Monicas","Zuma","Santa_Cruz","Santa_Rosa"))
 
 stachys_biomass$Population <- revalue(stachys_biomass$Population, c('El_Capitan' = 'El Capitan', 'Santa_Monicas' = 'Santa Monicas', 'Santa_Cruz' = 'Santa Cruz', 'Santa_Rosa' = 'Santa Rosa'))
 
@@ -174,7 +175,7 @@ stachys_biomass$total_mass <- with(stachys_biomass, (Cumulative_Mass - Bag_Mass)
 
 sbbg_stachys_biomass <- stachys_biomass[stachys_biomass$Garden == 'SBBG',] #filter out biomass records from the SCI garden
 
-pdf(file = './figures/Fig6a.pdf', height = 6, width = 5)
+#pdf(file = './figures/Fig6a.pdf', height = 6, width = 5)
 ggplot(sbbg_stachys_biomass, aes(x = Population, y = total_mass))+
   geom_boxplot(aes(fill = Population), alpha = 0.3, outlier.color = 'white')+
   geom_point(aes(fill = Population), col = 'black', pch = 21, position = position_jitterdodge(1))+
@@ -185,7 +186,7 @@ ggplot(sbbg_stachys_biomass, aes(x = Population, y = total_mass))+
                                  axis.text.x = element_text(angle = 60, hjust = 1))+
   theme(legend.position = 'none')+
   ylab('Aboveground Dry Biomass (g)')
-dev.off()
+#dev.off()
 
 ####
 
@@ -208,7 +209,7 @@ stachys.sla <- merge(stachys.sla, stachys_sbbg, by = 'Index')
 stachys.sla$Population <- sub("_", " ", stachys.sla$Population)
 stachys.sla$Population <- factor(stachys.sla$Population, c('Gaviota','El Capitan','Santa Monicas','Zuma','Santa Cruz','Santa Rosa'))
 
-pdf(file = './figures/Fig6b.pdf', height = 6, width = 3)
+#pdf(file = './figures/Fig6b.pdf', height = 6, width = 3)
 ggplot(stachys.sla[stachys.sla$Garden == 'SBBG' & stachys.sla$Year==2017,], 
        aes(x = Population, y = SLA))+
   geom_boxplot(aes(fill = Population), alpha = 0.3, outlier.colour = 'white')+
@@ -220,7 +221,7 @@ ggplot(stachys.sla[stachys.sla$Garden == 'SBBG' & stachys.sla$Year==2017,],
   theme(legend.position = 'none')+
   labs(y = expression ('Specific Leaf Area'~(cm^2/g)))+
   ylim(c(1.25,4))
-dev.off()
+#dev.off()
 
 stachys.sla$IM <- ifelse(stachys.sla$Population %in% c('Santa Cruz', 'Santa Rosa'), 'Island',"Mainland")
 

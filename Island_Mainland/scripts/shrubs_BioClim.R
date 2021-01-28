@@ -1,3 +1,8 @@
+library(plyr)
+library(stringr)
+library(sp)
+library(rgdal)
+
 ###### Script for getting BioClim data for shrubs sampled in island/mainland comparisons
 
 shrub.bearings = read.csv(file="~/Downloads/shrubs_coordinates.csv",head=T) #load in plant coordinates
@@ -30,7 +35,7 @@ plant.ID <- paste(plant.spp, plant.num, sep = "_")
 shrub.bearings$plant.ID <- plant.ID
 shrub.bearings$species <- plant.spp
 
-leaf.data.spatial <- merge(shrub.bearings, raw.dat, by = "plant.ID")
+leaf.data.spatial <- merge(shrub.bearings, leaf.data, by = "plant.ID")
 
 df1=aggregate(lat ~ plant.ID + Site, data = leaf.data.spatial, FUN = mean)
 df2=aggregate(lon ~ plant.ID + Site, data = leaf.data.spatial, FUN = mean)
@@ -43,25 +48,21 @@ plant.mapping$species <- gsub('_', '', spp2)
 #now need to convert into a spatially explicit dataframe
 #####
 
-plant.mapping.sp <- SpatialPointsDataFrame(plant.mapping[,c(3:4)], plant.mapping[,-c(3:4)])
+plant.mapping.sp <- SpatialPointsDataFrame(plant.mapping[,c(4,3)], plant.mapping[,-c(4,3)])
 
 crs.geo<-CRS("+init=epsg:4326")
 proj4string(plant.mapping.sp) <- crs.geo #this is doing the same things as the "coordinates" function and is just combining lat and lon into a readable single entity for spatial mapping objects
 
-is.projected(plant.mapping.sp) #points now are indeed projections
-
-
 ##### first, add in bioclim variables
 
 library(raster)
-library(sp)
 
 r <- getData("worldclim",var="bio",res=2.5)
 
 r2 <- r[[c(1:19)]]
 
-names(r2) <- c("BIO1 = Annual Mean Temperature", "BIO2 = Mean Diurnal Range", "BIO3 = Isothermality",
-               "BIO4 = Temperature Seasonality", "BIO5 = Max Temperature of Warmest Month", "BIO6 = Min Temperature of Coldest Month", "BIO7 = Temperature Annual Range (BIO5-BIO6)", "BIO8 = Mean Temperature of Wettest Quarter", "BIO9 = Mean Temperature of Driest Quarter", "BIO10 = Mean Temperature of Warmest Quarter", "BIO11 = Mean Temperature of Coldest Quarter", "BIO12 = Annual Precipitation", "BIO13 = Precipitation of Wettest Month", "BIO14 = Precipitation of Driest Month", "BIO15 = Precipitation Seasonality (Coefficient of Variation)", "BIO16 = Precipitation of Wettest Quarter", "BIO17 = Precipitation of Driest Quarter", "BIO18 = Precipitation of Warmest Quarter", "BIO19 = Precipitation of Coldest Quarter")
+#names(r2) <- c("BIO1 = Annual Mean Temperature", "BIO2 = Mean Diurnal Range", "BIO3 = Isothermality",
+"BIO4 = Temperature Seasonality", "BIO5 = Max Temperature of Warmest Month", "BIO6 = Min Temperature of Coldest Month", "BIO7 = Temperature Annual Range (BIO5-BIO6)", "BIO8 = Mean Temperature of Wettest Quarter", "BIO9 = Mean Temperature of Driest Quarter", "BIO10 = Mean Temperature of Warmest Quarter", "BIO11 = Mean Temperature of Coldest Quarter", "BIO12 = Annual Precipitation", "BIO13 = Precipitation of Wettest Month", "BIO14 = Precipitation of Driest Month", "BIO15 = Precipitation Seasonality (Coefficient of Variation)", "BIO16 = Precipitation of Wettest Quarter", "BIO17 = Precipitation of Driest Quarter", "BIO18 = Precipitation of Warmest Quarter", "BIO19 = Precipitation of Coldest Quarter")#
 
 #specify latitudes and longitudes for each sampled point to extract climate data
 
@@ -92,6 +93,12 @@ fit.clim[[1]][2] / pc.sum #second PC explains 13.3% of variance
 library(factoextra)
 
 fviz_pca_var(fit.clim, col.var = "black")
+fviz_pca_biplot(fit.clim)
+fviz_pca_ind(fit.clim)
+
+pdf('./figures/Supplemental_Figures/Fig.S1.pdf', height = 5, width = 5)
+fviz_pca_biplot(fit.clim)
+dev.off()
 
 bioclim.vars$PC1 <- fit.clim$scores[,1] #extract first principal component and append to original df
 bioclim.vars$PC2 <- fit.clim$scores[,2] #same for second PC
@@ -102,19 +109,23 @@ islands <- c("Santa Rosa", "Santa Cruz", "Catalina")
 
 bioclim.vars$IM <- ifelse(bioclim.vars$Site %in% islands, "Island", "Mainland")
 
-ggplot(bioclim.vars, aes(x = PC1, y = PC2*-1, col = Site))+
-  geom_jitter(size = 5)+
-  theme_dark()+
-  xlab('PC1 (83.6%) - Temperature Seasonality')+
-  ylab('PC2 (13.3%) - Annual Precipitation')+
-  scale_color_manual(values = c('yellow','red','gold1', 'tomato1','khaki1','pink'))+
-  theme(legend.position = 'none')+
-  theme(axis.text = element_blank())+
-  annotate('text',x=-300,y=-175,label='Catalina',color = 'yellow',size=5)+
-  annotate('text',x=-625,y=90,label='Santa Cruz',color = 'gold1',size=5, angle = 60)+
-  annotate('text',x=-725,y=-25,label='Santa Rosa',color = 'khaki1',size=5)+
-  annotate('text',x=25,y=75,label='Gaviota',color = 'red',size=5, angle = 60)+
-  annotate('text',x=500,y=50,label='Santa Monicas',color = 'tomato1',size=5)+
-  annotate('text',x=900,y=0,label='Stunt Ranch',color = 'pink',size=5)
+pdf("./figures/Supplemental_Figures/Fig.S1b.pdf", height = 5, width = 7)
+ggplot(bioclim.vars, aes(x = PC1, y = PC2*-1, pch = Site, fill = IM))+
+  geom_point(size = 5, col = 'black')+
+  theme_bw(base_size = 16)+
+  xlab('PC1 (83.6%)')+
+  ylab('PC2 (13.3%)')+
+  scale_shape_manual(values = c(c(23, 21:25)))+
+  scale_fill_manual(values = c('blue','red'), guide = 'none')+
+  theme(legend.position = 'right')+
+  theme(axis.text = element_blank())
+dev.off()
+  
+#annotate('text',x=-300,y=-175,label='Catalina',color = 'blue',size=5)
+  #annotate('text',x=-625,y=90,label='Santa Cruz',color = 'blue',size=5, angle = 60)+
+  #annotate('text',x=-725,y=-25,label='Santa Rosa',color = 'blue',size=5)+
+  #annotate('text',x=25,y=75,label='Gaviota',color = 'red',size=5, angle = 60)+
+  #annotate('text',x=500,y=50,label='Santa Monicas',color = 'red',size=5)+
+  #annotate('text',x=900,y=0,label='Stunt Ranch',color = 'red',size=5)
 
 leaf.data <- merge(bioclim.vars[,c(1,3:4,25:26)], raw.dat, by = "plant.ID")

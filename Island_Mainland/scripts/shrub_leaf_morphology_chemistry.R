@@ -624,7 +624,7 @@ plot.cohd.2 <- data.frame('species' = levels(leaf.area.agg$Species), 'cohens_D' 
 
 plot.cohd <- rbind(plot.cohd.1, plot.cohd.2)
 
-pdf('./figures/test.Fig.3a.pdf', width = 9, height = 4)
+#pdf('./figures/test.Fig.3a.pdf', width = 9, height = 4)
 ggplot(plot.cohd, aes(x = location, y = cohens_D, col = location))+
   geom_hline(yintercept = 0)+
   geom_errorbar(aes(ymin = lower_CI, ymax = upper_CI), width = 0.1, size = 1)+
@@ -637,7 +637,7 @@ ggplot(plot.cohd, aes(x = location, y = cohens_D, col = location))+
   scale_fill_manual(values = c('purple','dodgerblue'))+
   theme(strip.text = element_text(size=16, face = 'italic'))+
   ylim(c(-2,5.5))
-dev.off()
+#dev.off()
 
 #### now do effect size for SLA
 
@@ -669,7 +669,7 @@ for(i in 1:length(levels(sla.agg$Species))){
 plot.cohd.sla <- data.frame('species' = levels(sla.agg$Species), 'cohens_D' = output[,1],
                             'lower_CI' = output[,2], 'upper_CI' = output[,3], 'location' = 'IS')
 
-pdf('./figures/test.Fig.3b.pdf', width = 9, height = 4)
+#pdf('./figures/test.Fig.3b.pdf', width = 9, height = 4)
 ggplot(plot.cohd.sla, aes(x = location, y = cohens_D))+
   geom_hline(yintercept = 0)+
   geom_errorbar(aes(ymin = lower_CI, ymax = upper_CI), width = 0.1, size = 1, col = 'purple')+
@@ -680,7 +680,7 @@ ggplot(plot.cohd.sla, aes(x = location, y = cohens_D))+
   ylab('Insularity Effect Size (SLA)')+
   theme(strip.text = element_text(size=16, face = 'italic'))+
   ylim(c(-1,2))
-dev.off()
+#dev.off()
 
 #no comparable measurements for common garden plants for SLA
 
@@ -719,7 +719,7 @@ plot.cohd.2.spines <- data.frame('species' = levels(spines.agg$Species)[4:5], 'c
 
 plot.cohd.spines <- rbind(plot.cohd.1.spines, plot.cohd.2.spines)
 
-pdf('./figures/test.Fig.3c.pdf', width = 4, height = 4)
+#pdf('./figures/test.Fig.3c.pdf', width = 4, height = 4)
 ggplot(plot.cohd.spines, aes(x = location, y = cohens_D, col = location))+
   geom_hline(yintercept = 0)+
   geom_errorbar(aes(ymin = lower_CI, ymax = upper_CI), width = 0.1, size = 1)+
@@ -732,7 +732,7 @@ ggplot(plot.cohd.spines, aes(x = location, y = cohens_D, col = location))+
   scale_fill_manual(values = c('purple','dodgerblue'))+
   theme(strip.text = element_text(size=16, face = 'italic'))+
   ylim(c(-9,3))
-dev.off()
+#dev.off()
 
 #and finally, do the same for cyanogenic glycosides
 
@@ -777,7 +777,7 @@ plot.cohd.2.cng <- data.frame('species' = levels(cyanide.agg$Species)[2:3], 'coh
 
 plot.cohd.cng <- rbind(plot.cohd.1.cng, plot.cohd.2.cng)
 
-pdf('./figures/test.Fig.3d.pdf', width = 4, height = 4)
+#pdf('./figures/test.Fig.3d.pdf', width = 4, height = 4)
 ggplot(plot.cohd.cng, aes(x = location, y = cohens_D, col = location))+
   geom_hline(yintercept = 0)+
   geom_errorbar(aes(ymin = lower_CI, ymax = upper_CI), width = 0.1, size = 1)+
@@ -790,4 +790,4 @@ ggplot(plot.cohd.cng, aes(x = location, y = cohens_D, col = location))+
   scale_fill_manual(values = c('purple','dodgerblue'))+
   theme(strip.text = element_text(size=16, face = 'italic'))+
   ylim(c(-4,1))
-dev.off()
+#dev.off()
