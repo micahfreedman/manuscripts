@@ -45,14 +45,14 @@ ggplot(df1[df1$RT > 0.7 & df1$RT < 12 & df1$sample %in% c('1020','1051.1'),],
 display.samples <- c('406.2','547.1','749.1','805.4','940.1','1051.1') 
 
 #pdf('../../figures/Figx.pdf', height = 10, width = 6)
-ggplot(df1[df1$RT > 0.75 & df1$RT < 10 & df1$sample %in% display.samples,],
+ggplot(df1[df1$RT > 0.7 & df1$RT < 10 & df1$sample %in% display.samples,],
        aes(x = RT, y = Value, col = species))+
   geom_line(size = 0.5)+
   geom_area(aes(fill = species), alpha = 0.3)+
   theme_light(base_size = 14)+
   facet_wrap(~species, ncol = 1, strip.position = 'right')+
   ylab('Signal Intensity (mAU)')+
-  xlab('Retention Time')+
+  xlab('Retention Time (Minutes)')+
   scale_fill_manual(values = c('coral','purple','gold','turquoise','dodgerblue','blue'))+
   scale_color_manual(values = c('coral','purple','gold','turquoise','dodgerblue','blue'))+
   theme(legend.position = 'none')
