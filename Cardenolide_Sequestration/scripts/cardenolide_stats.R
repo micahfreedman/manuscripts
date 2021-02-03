@@ -141,7 +141,7 @@ head(adult.info)
 
 names(adult.info)[1] <- 'Sample'
 
-wing.cardenolides <- merge(adult.info[,names(adult.info) %in% c('Sample','Usage','Plant.ID','Pop','GH','Group','Mon.Pop','maternal_family','sym.allo')], cardenolides[cardenolides$Tissue == 'Wing',], by = 'Sample')
+wing.cardenolides <- merge(adult.info[,names(adult.info) %in% c('Sample','Usage','Plant.ID','Pop','GH','Group','Mon.Pop','maternal_family','sym.allo','Sex')], cardenolides[cardenolides$Tissue == 'Wing',], by = 'Sample')
 
 table(wing.cardenolides$maternal_family) #440 total samples from 73 maternal families
 
@@ -153,12 +153,36 @@ names(wing.cardenolides) #Description of columns:
 #GH: refers to either 86W or Core, the two greenhouses where rearing occurred
 #Group: position of plants on greenhouse benches
 #Mon.Pop: the population of origin for monarch samples
+#Sex: male or female
 #maternal_family: maternal family of origin for monarch samples
 #sym.allo: refers to whether a given monarch was reared on a sympatric or allopatric host plant
 
-sequestration.model <- lmer(concentration ~  Mon.Pop*Species + (1|Pop/Plant.ID) + (1|maternal_family), data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])
+#plot of raw data to explore patterns across species and monarch populations
 
-summary(sequestration.model)
+ggplot(wing.cardenolides, aes(x = Mon.Pop, y = concentration))+
+  geom_boxplot(aes(fill = Species), outlier.color = 'white', alpha = 0.3)+
+  geom_point(aes(fill = Species), position = position_jitter(0.2), pch =21)+
+  facet_wrap(~Species, scales = 'free_y')+
+  scale_fill_manual(values = ascl.colors)+
+  theme_light(base_size = 14)+
+  xlab('Monarch Population')+
+  ylab('Cardenolide Concentration (mg/g)')+
+  theme(legend.position = 'none')+
+  theme(axis.text.x = element_text(angle = 75, hjust = 1))
+
+#A couple of things to note based on above plot. AINC and ASFA can largely be ignored because the values are so consistently low across all populations. For the other species, the monarch population from Guam has fairly low sequestraiton on many of the species, including its sympatric species (ASCU). By far the most interesting outlier is the Puerto Rican population, which has the highest mean sequestration on ASCU and GOPH (despite no history with it!) and by far the lowest on ASYR and ASPEC (both involve sequestration of predominantly polar compounds). Also interesting to note that variation on GOPH seems to be substantially lower than across other species: perhaps this reflects something about sequestration on GOPH being primarily passive.
+
+#First test: use model structure to directly test for local adaptation. Use the same model structure as in Evolution paper. In all models, exclude AINC and ASFA from the input data, since they have such low levels of cardenolide to begin with.
+
+local.adaptation.seq.model <- lmer(concentration ~ Mon.Pop + Species + sym.allo + Sex + (1|Pop/Plant.ID) + (1|maternal_family), data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])
+
+summary(local.adaptation.seq.model) #intercept is based on Australian monarchs on ASCU. All species are lower than ASCU (checks out), and Puerto Rico and Guam both sequester less than Australia, according to this model. However, there is no effect of local adaptation: in fact, sequestration on sympatric host plants is actually modestly lower (this is probably due to Guam and ASCU being a sympatric combo)
+
+#For the next model, don't include a sympatric/allopatric term, but do include an interaction between monarch population and milkweed species, since there did seem to be 
+
+sequestration.model <- lmer(concentration ~  Mon.Pop*Species + Sex + (1|Pop/Plant.ID) + (1|maternal_family), data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])
+
+summary(sequestration.model) #Once again ASCU and AU are the reference levels. ASCU higher than all other species. The strongest interaction term is for Puerto Rico on ASYR, which has an extremely negative estimate
 
 Anova(sequestration.model, type = 3) #does indeed indicate a highly significant monarch population x species effect, although that by itself is not indicative of local adaptation
 
