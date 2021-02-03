@@ -182,13 +182,47 @@ summary(local.adaptation.seq.model) #intercept is based on Australian monarchs o
 
 sequestration.model <- lmer(concentration ~  Mon.Pop*Species + Sex + (1|Pop/Plant.ID) + (1|maternal_family), data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])
 
-summary(sequestration.model) #Once again ASCU and AU are the reference levels. ASCU higher than all other species. The strongest interaction term is for Puerto Rico on ASYR, which has an extremely negative estimate
+summary(sequestration.model) #Once again ASCU and AU are the reference levels. ASCU higher than all other species. The strongest interaction term is for Puerto Rico on ASYR, which has a strongly negative estimate. Males sequester modestly less than females (I think this is a general pattern that has been reported before).
 
 Anova(sequestration.model, type = 3) #does indeed indicate a highly significant monarch population x species effect, although that by itself is not indicative of local adaptation
 
-emmeans(sequestration.model, specs = ~Mon.Pop*Species, data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])
+emmeans(sequestration.model, specs = ~Mon.Pop*Species, data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),]) #estimated marginal means for each species x monarch population combination
 
-summary(glht(sequestration.model, linfct = mcp(Mon.Pop = "Tukey")))
+summary(glht(sequestration.model, linfct = mcp(Mon.Pop = "Tukey"))) #gives an error message related to interaction term. As an alternative, can create a new data column that coresponds to the combination of mon.pop x species, and then use this as a predictor.
+
+wing.cardenolides$combination <- paste(wing.cardenolides$Mon.Pop, wing.cardenolides$Species, sep = ' x ')
+
+sequestration.model.x <- lmer(concentration ~ combination + Mon.Pop + Sex + (1|Pop/Plant.ID) + (1|maternal_family), data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])
+
+summary(glht(sequestration.model.x, linfct = mcp(Mon.Pop = "Tukey"))) #Can't get estimates because model includes too many levels for the combination term (n = 36) for the model to be fully specified.
+
+emm.mon.pop <- as.data.frame(emmeans(sequestration.model, specs = ~Mon.Pop, data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])) #marginal means for monarch population only
+
+ggplot(emm.mon.pop, aes(x = Mon.Pop, y = emmean))+
+  geom_point()+
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.3)
+
+#### Now, for the sake of comparison, create a reaction norm plot showing Puerto Rico and eastern North America with ASCU and ASYR. Build a function that enables pairwise reaction norms comparisons for any combination of two species and two populations.
+
+rxn.norm.plot <- function(df1, pops, spp){
+  df.use <- df1[df1$Species %in% spp & df1$Mon.Pop %in% pops,]
+  agg.data <- do.call(data.frame, aggregate(concentration ~ Mon.Pop + Species, df.use, 
+                        function(y) c(mean(y), sd(y) / sqrt(length(y)))))
+  names(agg.data)[3:4] <- c('Concentration', 'SE')
+  ggplot(agg.data, aes(x = Species, y = Concentration, group = Mon.Pop, col = Mon.Pop))+
+    geom_point(pch = 21)+
+    geom_line()+
+    geom_errorbar(aes(ymin = Concentration - SE, ymax = Concentration + SE), width = 0.2)+
+    theme_light(base_size = 16)
+}
+
+rxn.norm.plot(wing.cardenolides, pops = c('ENA','PR'), spp = c('ASYR','ASCU'))
+  
+
+aggregate(concentration ~ Mon.Pop + Species, data = wing.cardenolides[wing.cardenolides$Species %in% c('ASCU','ASYR') & wing.cardenolides$Mon.Pop %in% c('ENA','PR'),], function(y) c(mean(y), sd(y) / sqrt(length(y))))
+
+
+
 
 
 
