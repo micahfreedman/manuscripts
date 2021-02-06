@@ -159,16 +159,18 @@ names(wing.cardenolides) #Description of columns:
 
 #plot of raw data to explore patterns across species and monarch populations
 
+pdf('./figures/FigSx1.pdf', height = 8, width = 7)
 ggplot(wing.cardenolides, aes(x = Mon.Pop, y = concentration))+
   geom_boxplot(aes(fill = Species), outlier.color = 'white', alpha = 0.3)+
   geom_point(aes(fill = Species), position = position_jitter(0.2), pch =21)+
-  facet_wrap(~Species, scales = 'free_y')+
+  facet_wrap(~Species, scales = 'free')+
   scale_fill_manual(values = ascl.colors)+
   theme_light(base_size = 14)+
   xlab('Monarch Population')+
   ylab('Cardenolide Concentration (mg/g)')+
   theme(legend.position = 'none')+
   theme(axis.text.x = element_text(angle = 75, hjust = 1))
+dev.off()
 
 #A couple of things to note based on above plot. AINC and ASFA can largely be ignored because the values are so consistently low across all populations. For the other species, the monarch population from Guam has fairly low sequestraiton on many of the species, including its sympatric species (ASCU). By far the most interesting outlier is the Puerto Rican population, which has the highest mean sequestration on ASCU and GOPH (despite no history with it!) and by far the lowest on ASYR and ASPEC (both involve sequestration of predominantly polar compounds). Also interesting to note that variation on GOPH seems to be substantially lower than across other species: perhaps this reflects something about sequestration on GOPH being primarily passive.
 
@@ -210,21 +212,27 @@ rxn.norm.plot <- function(df1, pops, spp){
                         function(y) c(mean(y), sd(y) / sqrt(length(y)))))
   names(agg.data)[3:4] <- c('Concentration', 'SE')
   ggplot(agg.data, aes(x = Species, y = Concentration, group = Mon.Pop, col = Mon.Pop))+
-    geom_point(pch = 21)+
-    geom_line()+
-    geom_errorbar(aes(ymin = Concentration - SE, ymax = Concentration + SE), width = 0.2)+
-    theme_light(base_size = 16)
+    geom_point(size = 3)+
+    geom_line(size = 1)+
+    geom_errorbar(aes(ymin = Concentration - SE, ymax = Concentration + SE), width = 0.1, size = 1)+
+    theme_classic(base_size = 16)+
+    scale_color_manual(values = c('cornflowerblue','orange'))+
+    ylab('Wing Cardenolide Concentration (mg/g)')+
+    theme(legend.position = c(0.85, 0.76), legend.title = element_blank())
 }
 
+pdf('./figures/Figx4.pdf', height = 6, width = 4)
 rxn.norm.plot(wing.cardenolides, pops = c('ENA','PR'), spp = c('ASYR','ASCU'))
-  
+dev.off()
 
-aggregate(concentration ~ Mon.Pop + Species, data = wing.cardenolides[wing.cardenolides$Species %in% c('ASCU','ASYR') & wing.cardenolides$Mon.Pop %in% c('ENA','PR'),], function(y) c(mean(y), sd(y) / sqrt(length(y))))
+## Related to the above figure, conduct an analysis to see whether there is a potential tradeoff in sequestration ability across temperate versus tropical species (here, this is a standin for sequestration mode, as the temperate species require more active sequestration)
 
+wing.cardenolides$polar.spp <- ifelse(wing.cardenolides$Species %in% c('ASCU','GOPH'), 'tropical', 'temperate')
 
+trop.model.seq <- lmer(concentration ~ polar.spp*Mon.Pop + (1|Species/Pop/Plant.ID) + (1|maternal_family), data = wing.cardenolides[!wing.cardenolides$Species %in% c('AINC','ASFA'),])
 
-
-
+summary(trop.model.seq) #Puerto Rico struggles mightily on temperate species, not surprisingly. Guam is actually modestly better on temperate species than would be suggested, but this effect would go away after correcting for multiple comparisons.
+Anova(trop.model.seq, type = 3) #again, reiterates that populations vary greatly in their ability to sequester depending on whether the host plant is tropical or temperate in origin
 
 ######## Q for marianas comps: do ASCU genotypes from Rota really have lower cardenolides than from Guam
 
@@ -242,4 +250,9 @@ summary(lm(concentration ~ Pop, data = ascu.leaf.cards)) #not significantly high
 
 ggplot(ascu.leaf.cards, aes(x = Pop, y = concentration))+
   geom_boxplot()
+
+
+
+####### Unfortunately can not include the 5 monarchs collected in Guam in 2018, since they were analyzed in Rachel's lab on a different column
+
 
