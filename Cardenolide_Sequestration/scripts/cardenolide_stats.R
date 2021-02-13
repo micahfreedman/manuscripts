@@ -9,6 +9,7 @@ library(lmerTest)
 library(emmeans)
 library(car)
 library(multcomp)
+library(stringr)
 
 setwd('~/Documents/GitHub/Sites/manuscripts/Cardenolide_Sequestration/')
 
@@ -82,13 +83,17 @@ sequestration_ratio(cardenolides)
 
 #Plot raw concentrations
 
+#first, rearrange milkweed species according to phylogenetic position
+
+cardenolides$Species <- factor(cardenolides$Species, c('GOPH','ASCU','AINC','ASFA','ASYR','ASPEC'))
+
 #make vector of colors for plotting
-ascl.colors <- c('coral','purple','gold','turquoise','dodgerblue','blue')
+ascl.colors <- c('blue','purple','coral','gold','dodgerblue','turquoise')
 
 pdf('./figures/Figx2.pdf', height = 8, width = 5)
 ggplot(cardenolides, aes(x = Tissue, y = concentration, fill = Species))+
   geom_boxplot(outlier.color = 'white', alpha = 0.3)+
-  geom_point(position = position_jitterdodge(0.5), pch = 21)+
+  geom_point(position = position_jitterdodge(1), pch = 21)+
   scale_fill_manual(values = ascl.colors)+
   facet_wrap(~Species, ncol = 2, scales = 'free')+
   theme_light(base_size = 16)+
@@ -115,12 +120,16 @@ stressplot(cards_nmds)
 
 cards.data.scores <- cbind(cardenolides[-which(cardenolides$concentration==0),1:9], scores(cards_nmds))
 
-pdf('./figures/Figx3.pdf', height = 8, width = 10)
-ggplot(cards.data.scores, aes(x = NMDS1, y = NMDS2, col = Species))+
-  geom_point(aes(shape = Tissue), size = 2)+
+pdf('./figures/Figx3.pdf', height = 8, width = 8)
+ggplot(cards.data.scores, aes(x = NMDS1, y = NMDS2, col = Species, shape = Tissue))+
+  geom_point(size = 2)+
   scale_shape_manual(values = c(15,19))+
   scale_color_manual(values = ascl.colors)+
-  theme_light(base_size = 16)
+  theme_light(base_size = 16)+
+  theme(legend.position = c(0.2, 0.77), legend.background = element_rect(fill = 'grey95', color = 'black'), 
+        legend.title.align = 0.5, legend.title = element_text(face = 'bold'))+
+  ylim(-0.8,1.2)+
+  guides(col = guide_legend(ncol = 2, order = 1))
 dev.off()
 
 plot_ly(cards.data.scores[cards.data.scores$Tissue=='Wing',], x = ~NMDS1, y = ~NMDS2, z = ~NMDS3, color = ~Species, colors = ascl.colors) #3d version of the same figure, but only showing points for wings. Might have issues trying to run with R versions < 4.0.0
@@ -129,7 +138,29 @@ plot_ly(cards.data.scores[cards.data.scores$Tissue=='Wing',], x = ~NMDS1, y = ~N
 
 #Now generate a polarity index for each sample. Here, the idea is to determine whether the sequestered cardenolides from some species are disproportionately composed of polar compounds (expected to be the case for ASYR and ASPEC)
 
+polarity.index <- function(x){
+  vec.RT <- as.numeric(sub('.', '', names(x)[10:79]))
+  polSum <- rowSums(data.frame(mapply(`*`,cardenolides[10:79],vec.RT)))
+  pol.ind <- 1 - (polSum / max(polSum))
+  print(pol.ind)
+}
 
+cardenolides$polarity.index <- polarity.index(cardenolides)
+
+PI.plot <- do.call(data.frame, aggregate(polarity.index ~ Species, cardenolides[cardenolides$Tissue=='Wing',], function(y) c(mean(y), sd(y))))
+names(PI.plot)[2:3] <- c('Polarity_Index', 'SD')
+
+pdf('./figures/Figx3c.pdf', height = 8, width = 3)
+ggplot(PI.plot, aes(x = Species, y = Polarity_Index, col = Species, fill = Species))+
+  geom_point(size = 4, pch = 21)+
+  geom_errorbar(aes(ymin = Polarity_Index - SD, ymax = Polarity_Index + SD), width = 0.2, size = 1)+
+  theme_light(base_size = 16)+
+  ylab('Polarity Index - Wing Tissue')+
+  scale_color_manual(values = ascl.colors)+
+  scale_fill_manual(values = ascl.colors)+
+  theme(legend.position = 'none')+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+dev.off()
 
 ###################
 
@@ -159,7 +190,7 @@ names(wing.cardenolides) #Description of columns:
 
 #plot of raw data to explore patterns across species and monarch populations
 
-pdf('./figures/FigSx1.pdf', height = 8, width = 7)
+#pdf('./figures/FigSx1.pdf', height = 8, width = 7)
 ggplot(wing.cardenolides, aes(x = Mon.Pop, y = concentration))+
   geom_boxplot(aes(fill = Species), outlier.color = 'white', alpha = 0.3)+
   geom_point(aes(fill = Species), position = position_jitter(0.2), pch =21)+
@@ -170,7 +201,7 @@ ggplot(wing.cardenolides, aes(x = Mon.Pop, y = concentration))+
   ylab('Cardenolide Concentration (mg/g)')+
   theme(legend.position = 'none')+
   theme(axis.text.x = element_text(angle = 75, hjust = 1))
-dev.off()
+#dev.off()
 
 #A couple of things to note based on above plot. AINC and ASFA can largely be ignored because the values are so consistently low across all populations. For the other species, the monarch population from Guam has fairly low sequestraiton on many of the species, including its sympatric species (ASCU). By far the most interesting outlier is the Puerto Rican population, which has the highest mean sequestration on ASCU and GOPH (despite no history with it!) and by far the lowest on ASYR and ASPEC (both involve sequestration of predominantly polar compounds). Also interesting to note that variation on GOPH seems to be substantially lower than across other species: perhaps this reflects something about sequestration on GOPH being primarily passive.
 
@@ -215,8 +246,8 @@ rxn.norm.plot <- function(df1, pops, spp){
     geom_point(size = 3)+
     geom_line(size = 1)+
     geom_errorbar(aes(ymin = Concentration - SE, ymax = Concentration + SE), width = 0.1, size = 1)+
-    theme_classic(base_size = 16)+
-    scale_color_manual(values = c('cornflowerblue','orange'))+
+    theme_classic(base_size = 20)+
+    scale_color_manual(values = c('darkgreen','orange'))+
     ylab('Wing Cardenolide Concentration (mg/g)')+
     theme(legend.position = c(0.85, 0.76), legend.title = element_blank())
 }
