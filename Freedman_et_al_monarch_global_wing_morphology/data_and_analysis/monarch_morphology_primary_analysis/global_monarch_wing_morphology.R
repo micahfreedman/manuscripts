@@ -13,7 +13,7 @@ library(emmeans)
 
 setwd('~/Documents/GitHub/Sites/manuscripts/Freedman_et_al_monarch_global_wing_morphology/data_and_analysis/')
 
-wings = read.csv(file="./wings_04.25.20.csv",header=TRUE)
+wings = read.csv(file="./monarch_morphology_primary_analysis/wings_04.25.20.csv",header=TRUE)
 
 ## reformat dates into separate columns for day, month, and year of collection
 

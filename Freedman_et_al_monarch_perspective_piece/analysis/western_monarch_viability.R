@@ -163,15 +163,17 @@ cor.test(t(kem1$states)[1:30], t(kem1$states)[6:35])
 
 western_abundance <- data.frame("year" = years, "abundance" = as.vector(kem1$states), "abundance_scaled" = as.vector(scale_factor*exp(kem1$states)),"LI" = as.vector(scale_factor*exp(kem1.LI)), "UI" = scale_factor*exp(as.vector(kem1.UI)), "source" = rep("Schutlz", 36))
 
+write.csv(western_abundance, file = '~/Desktop/god_never_again.csv', row.names = F)
+
 ### append data from 2017-2019 to this
 
-wab_recent <- data.frame("year" = c(2017,2018,2019), "abundance" = rep(NA, 3), "abundance_scaled" = c(0.192, 0.027, 0.029),"LI" = rep(NA,3), "UI" = rep(NA,3), "source" = rep("Xerces", 3))
+wab_recent <- data.frame("year" = c(2017,2018,2019,2020), "abundance" = rep(NA, 4), "abundance_scaled" = c(0.192, 0.027, 0.029, 0.002),"LI" = rep(NA,4), "UI" = rep(NA,4), "source" = rep("Xerces", 4))
 
 western_abundance <- rbind(western_abundance, wab_recent)
 
 f1_format <- theme(axis.text = element_text(size = 12), axis.title = element_text(size = 14, face = 'bold'))
 
-ggplot(western_abundance, aes(x = year, y = abundance_scaled))+
+(Fig1d <- ggplot(western_abundance, aes(x = year, y = abundance_scaled))+
   theme_dark()+
   f1_format+
   geom_point(aes(shape = source), size = 4, col = 'orange')+
@@ -184,45 +186,49 @@ ggplot(western_abundance, aes(x = year, y = abundance_scaled))+
   xlim(c(1980,2019))+
   xlab('Year')+
   geom_vline(xintercept = 2016.5, lty = 2)+
-  scale_x_continuous(n.breaks = 10)
+  scale_x_continuous(n.breaks = 10))
 
+ggsave(file="~/Desktop/test.pdf", plot=Fig1d, width=6, height=5)
 
 #### read in eastern North American data
 
-eastern <- read.csv('~/Desktop/eastern_overwintering.csv')
+eastern <- read.csv('~/Documents/GitHub/Sites/manuscripts/Freedman_et_al_monarch_perspective_piece/analysis/eastern_overwintering.csv')
 
-ggplot(eastern, aes(x = year, y = hectares))+
+(Fig1c <- ggplot(eastern, aes(x = year, y = hectares))+
   theme_dark()+
   f1_format+
   geom_point(size = 4, col = 'yellow')+
   geom_line(col = 'yellow')+
   ylab('Abundance (Hectares Occupied)')+
   theme(legend.position = 'none')+
-  xlim(c(1980,2019))+
   xlab('Year')+
-  geom_smooth(method = 'loess', col = 'black', fill = 'yellow', alpha = 0.25)+
-  scale_y_continuous(
-    labels = scales::number_format(accuracy = 0.01,decimal.mark = '.'))
+  stat_smooth(method = 'lm', col = 'black', fill = 'yellow', alpha = 0.25, 
+              formula = y ~ splines::bs(x, 5))+
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01,decimal.mark = '.'), limits = c(0,20), 
+                     oob = scales::squish)+
+  scale_x_continuous(breaks = seq(1980, 2020, by = 5), lim = c(1980,2020)))
+
+ggsave(file="~/Desktop/test2.pdf", plot=Fig1c, width=6, height=5)
 
 ## comparison between eastern and western overwintering numbers
 
 plot.both <- merge(eastern, western_abundance, by =  'year')
 
-ggplot(plot.both, aes(x = (hectares), y = abundance_scaled))+
+summary(lm(abundance_scaled ~ acreage, data = plot.both))
+
+(Fig1b <- ggplot(plot.both, aes(x = (hectares), y = abundance_scaled))+
   theme_classic()+
   f1_format+
   scale_y_log10(breaks = c(30, 10, 3, 1, 0.3, 0.1, 0.03))+
   geom_point(col = 'black', size = 2)+
   geom_text_repel(aes(label = year), size = 3)+
-  stat_smooth(method = 'lm', col = 'black', fill = 'aquamarine', 
-              alpha = 0.4, lty = 2, size = 0.5)+
   ylab('Western Abundance (Millions of Butterflies)')+
   xlab('Eastern Abundance (Hectares Occupied)')+
-  annotate("text", x = 17, y = 9.5, label = expression(paste("R"^2)~'= 0.027'))+
-  annotate("text", x = 17, y = 7.5, label = 'p = 0.41')+
-  annotate("rect", xmin = 14.5, xmax = 19.5, ymin = 6, ymax = 11, alpha = 0.1, col = 'black')
+  annotate("text", x = 17, y = 9.5, label = 'r = 0.030\n')+
+  annotate("text", x = 17, y = 7.5, label = 'p = 0.374')+
+  annotate("rect", xmin = 14.5, xmax = 19.5, ymin = 5.5, ymax = 15, alpha = 0.1, col = 'black'))
 
-summary(lm(abundance_scaled ~ acreage, data = plot.both))
+ggsave(file = '~/Desktop/test3.pdf', width = 6, height = 5)
 
 #### now make same figure, but with one year time lag to see if there is any correlation (i.e. does eastern population size in year 'n' predict western population size in year 'n+1'?)
 

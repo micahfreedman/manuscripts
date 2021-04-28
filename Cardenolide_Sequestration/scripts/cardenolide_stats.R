@@ -90,7 +90,7 @@ cardenolides$Species <- factor(cardenolides$Species, c('GOPH','ASCU','AINC','ASF
 #make vector of colors for plotting
 ascl.colors <- c('blue','purple','coral','gold','dodgerblue','turquoise')
 
-pdf('./figures/Figx2.pdf', height = 8, width = 5)
+#pdf('./figures/Figx2.pdf', height = 8, width = 5)
 ggplot(cardenolides, aes(x = Tissue, y = concentration, fill = Species))+
   geom_boxplot(outlier.color = 'white', alpha = 0.3)+
   geom_point(position = position_jitterdodge(1), pch = 21)+
@@ -99,7 +99,7 @@ ggplot(cardenolides, aes(x = Tissue, y = concentration, fill = Species))+
   theme_light(base_size = 16)+
   theme(legend.position = 'none')+
   ylab('Cardenolide Concentration (mg/g)')
-dev.off()
+#dev.off()
 
 #######
 
@@ -120,7 +120,7 @@ stressplot(cards_nmds)
 
 cards.data.scores <- cbind(cardenolides[-which(cardenolides$concentration==0),1:9], scores(cards_nmds))
 
-pdf('./figures/Figx3.pdf', height = 8, width = 8)
+#pdf('./figures/Figx3.pdf', height = 8, width = 8)
 ggplot(cards.data.scores, aes(x = NMDS1, y = NMDS2, col = Species, shape = Tissue))+
   geom_point(size = 2)+
   scale_shape_manual(values = c(15,19))+
@@ -130,37 +130,57 @@ ggplot(cards.data.scores, aes(x = NMDS1, y = NMDS2, col = Species, shape = Tissu
         legend.title.align = 0.5, legend.title = element_text(face = 'bold'))+
   ylim(-0.8,1.2)+
   guides(col = guide_legend(ncol = 2, order = 1))
-dev.off()
+#dev.off()
 
 plot_ly(cards.data.scores[cards.data.scores$Tissue=='Wing',], x = ~NMDS1, y = ~NMDS2, z = ~NMDS3, color = ~Species, colors = ascl.colors) #3d version of the same figure, but only showing points for wings. Might have issues trying to run with R versions < 4.0.0
+
+#####
+#Within each milkweed species, test for whether leaf and wing cardenolide composition is different
+darp <- cardenolides[-which(rowSums(cardenolides[,10:79]) == 0),]
+larp <- darp[darp$Species=='GOPH',]
+cards.dist.mat <- vegdist(larp[,10:79], method = 'bray')
+
+adonis2(cards.dist.mat ~ Tissue, data = larp, permutations = 999)
+#ASCU: F = 57.2
+#AINC: F = 15.1
+#ASFA: F = 20.1
+#ASYR: F = 27.0
+#ASPEC: F = 9.5
+#GOPH: F = 103.5
 
 ##### 
 
 #Now generate a polarity index for each sample. Here, the idea is to determine whether the sequestered cardenolides from some species are disproportionately composed of polar compounds (expected to be the case for ASYR and ASPEC)
 
-polarity.index <- function(x){
-  vec.RT <- as.numeric(sub('.', '', names(x)[10:79]))
-  polSum <- rowSums(data.frame(mapply(`*`,cardenolides[10:79],vec.RT)))
+#drop rows where sum is 0 from main dataframe
+
+cardenolides.polarity <- cardenolides[-which(rowSums(cardenolides[,10:79])<0.1),]
+
+polarity.index <- function(dfx){
+  cards.numeric <- dfx[,10:79] #can't include samples with sum 0 rows
+  rel.abund <- sweep(cards.numeric, 1, rowSums(cards.numeric), "/")
+  vec.RT <- as.numeric(sub('.', '', names(dfx)[10:79]))
+  polSum <- rowSums(data.frame(mapply(`*`,rel.abund,vec.RT)))
   pol.ind <- 1 - (polSum / max(polSum))
   print(pol.ind)
 }
 
-cardenolides$polarity.index <- polarity.index(cardenolides)
+cardenolides.polarity$polarity <- polarity.index(cardenolides.polarity)
 
-PI.plot <- do.call(data.frame, aggregate(polarity.index ~ Species, cardenolides[cardenolides$Tissue=='Wing',], function(y) c(mean(y), sd(y))))
-names(PI.plot)[2:3] <- c('Polarity_Index', 'SD')
+PI.plot <- do.call(data.frame, aggregate(polarity ~ Species, cardenolides.polarity[cardenolides.polarity$Tissue=='Wing',], function(y) c(mean(y), sd(y))))
+names(PI.plot)[2:3] <- c('polarity', 'SD')
 
-pdf('./figures/Figx3c.pdf', height = 8, width = 3)
-ggplot(PI.plot, aes(x = Species, y = Polarity_Index, col = Species, fill = Species))+
+#pdf('./figures/Figx3c.pdf', height = 8, width = 3)
+ggplot(PI.plot, aes(x = Species, y = polarity, col = Species, fill = Species))+
   geom_point(size = 4, pch = 21)+
-  geom_errorbar(aes(ymin = Polarity_Index - SD, ymax = Polarity_Index + SD), width = 0.2, size = 1)+
+  geom_errorbar(aes(ymin = polarity - SD, ymax = polarity + SD), width = 0.2, size = 1)+
   theme_light(base_size = 16)+
   ylab('Polarity Index - Wing Tissue')+
   scale_color_manual(values = ascl.colors)+
   scale_fill_manual(values = ascl.colors)+
   theme(legend.position = 'none')+
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
-dev.off()
+#dev.off()
 
 ###################
 
@@ -190,15 +210,16 @@ names(wing.cardenolides) #Description of columns:
 
 #plot of raw data to explore patterns across species and monarch populations
 
-#pdf('./figures/FigSx1.pdf', height = 8, width = 7)
-ggplot(wing.cardenolides, aes(x = Mon.Pop, y = concentration))+
+#pdf('./figures/Fig4xa.pdf', height = 9, width = 7)
+ggplot(wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),],
+       aes(x = Mon.Pop, y = concentration))+
   geom_boxplot(aes(fill = Species), outlier.color = 'white', alpha = 0.3)+
-  geom_point(aes(fill = Species), position = position_jitter(0.2), pch =21)+
+  geom_point(aes(fill = Species), position = position_jitter(0.25), pch =21)+
   facet_wrap(~Species, scales = 'free')+
-  scale_fill_manual(values = ascl.colors)+
-  theme_light(base_size = 14)+
+  scale_fill_manual(values = ascl.colors[c(1,2,5,6)])+
+  theme_light(base_size = 18)+
   xlab('Monarch Population')+
-  ylab('Cardenolide Concentration (mg/g)')+
+  ylab('Wing Cardenolide Concentration (mg/g)')+
   theme(legend.position = 'none')+
   theme(axis.text.x = element_text(angle = 75, hjust = 1))
 #dev.off()
@@ -221,7 +242,7 @@ Anova(sequestration.model, type = 3) #does indeed indicate a highly significant 
 
 emmeans(sequestration.model, specs = ~Mon.Pop*Species, data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),]) #estimated marginal means for each species x monarch population combination
 
-summary(glht(sequestration.model, linfct = mcp(Mon.Pop = "Tukey"))) #gives an error message related to interaction term. As an alternative, can create a new data column that coresponds to the combination of mon.pop x species, and then use this as a predictor.
+summary(glht(sequestration.model, linfct = mcp(Mon.Pop = "Tukey"))) #gives a warning message related to interaction term. As an alternative, can create a new data column that corresponds to the combination of mon.pop x species, and then use this as a predictor.
 
 wing.cardenolides$combination <- paste(wing.cardenolides$Mon.Pop, wing.cardenolides$Species, sep = ' x ')
 
@@ -242,19 +263,22 @@ rxn.norm.plot <- function(df1, pops, spp){
   agg.data <- do.call(data.frame, aggregate(concentration ~ Mon.Pop + Species, df.use, 
                         function(y) c(mean(y), sd(y) / sqrt(length(y)))))
   names(agg.data)[3:4] <- c('Concentration', 'SE')
-  ggplot(agg.data, aes(x = Species, y = Concentration, group = Mon.Pop, col = Mon.Pop))+
-    geom_point(size = 3)+
-    geom_line(size = 1)+
-    geom_errorbar(aes(ymin = Concentration - SE, ymax = Concentration + SE), width = 0.1, size = 1)+
-    theme_classic(base_size = 20)+
+  ggplot(agg.data, aes(x = Species, y = Concentration, group = Mon.Pop, fill = Mon.Pop))+
+    geom_errorbar(aes(ymin = Concentration - SE, ymax = Concentration + SE, col = Mon.Pop), 
+                  width = 0.1, size = 0.5)+
+    geom_point(size = 2, pch = 21)+
+    geom_line(size = 0.5, aes(col = Mon.Pop))+
+    theme_light(base_size = 8)+
+    scale_fill_manual(values = c('darkgreen','orange'))+
     scale_color_manual(values = c('darkgreen','orange'))+
     ylab('Wing Cardenolide Concentration (mg/g)')+
-    theme(legend.position = c(0.85, 0.76), legend.title = element_blank())
+    theme(legend.position = c(0.8, 0.9), legend.title = element_blank(), 
+          legend.background = element_rect(fill = 'grey95', colour = 'black'))
 }
 
-pdf('./figures/Figx4.pdf', height = 6, width = 4)
+#pdf('./figures/Figx4.pdf', height = 4, width = 2)
 rxn.norm.plot(wing.cardenolides, pops = c('ENA','PR'), spp = c('ASYR','ASCU'))
-dev.off()
+#dev.off()
 
 ## Related to the above figure, conduct an analysis to see whether there is a potential tradeoff in sequestration ability across temperate versus tropical species (here, this is a standin for sequestration mode, as the temperate species require more active sequestration)
 

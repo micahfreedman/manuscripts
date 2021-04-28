@@ -24,7 +24,7 @@ setwd('~/Documents/grad_school/Manuscripts/Perspective piece/analysis/')
 
 #### load gbif data: dataset ID is here -- https://doi.org/10.15468/dl.jx7wck
 #start_time <- Sys.time()
-gbif.monarchs <- read.csv('./monarchs_gbif.csv') #be patient: file is 92 Mb and contains over 212,000 records; takes about 10 seconds to load
+gbif.monarchs <- read.csv('~/Downloads/monarchs_gbif.csv') #be patient: file is 92 Mb and contains over 212,000 records; takes about 10 seconds to load
 #end_time <- Sys.time()
 #start_time - end_time
 
@@ -259,7 +259,7 @@ fin.dat.plot$east.west <- revalue(fin.dat.plot$east.west, c('east' = 'eastern', 
   theme(axis.text = element_text(size = 16), axis.title = element_text(size = 16))+
   theme(legend.text = element_text(size = 16), legend.box.background = element_rect(colour = "black")))
   
-#ggsave(file = '~/Desktop/fig1b.tiff', fig1b, width = 6, height = 6, dpi = 200)
+ggsave(file = '~/Desktop/fig1b.pdf', fig1b, width = 6, height = 8)
 
 
 #####
@@ -435,5 +435,5 @@ Fig1c <- ggplot(bioclim.vars[bioclim.vars$east.west!='resident',], aes(x = BIO18
 
 Fig1c
 
-ggsave(file = '~/Desktop/fig1c.tiff', Fig1c, width = 6, height = 6, dpi = 200)
+ggsave(file = '~/Desktop/fig1c.pdf', Fig1c, width = 6, height = 8)
 
