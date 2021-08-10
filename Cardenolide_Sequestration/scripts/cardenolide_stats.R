@@ -90,7 +90,7 @@ cardenolides$Species <- factor(cardenolides$Species, c('GOPH','ASCU','AINC','ASF
 #make vector of colors for plotting
 ascl.colors <- c('blue','purple','coral','gold','dodgerblue','turquoise')
 
-#pdf('./figures/Figx2.pdf', height = 8, width = 5)
+pdf('./figures/Figx2.pdf', height = 6, width = 5)
 ggplot(cardenolides, aes(x = Tissue, y = concentration, fill = Species))+
   geom_boxplot(outlier.color = 'white', alpha = 0.3)+
   geom_point(position = position_jitterdodge(1), pch = 21)+
@@ -99,7 +99,7 @@ ggplot(cardenolides, aes(x = Tissue, y = concentration, fill = Species))+
   theme_light(base_size = 16)+
   theme(legend.position = 'none')+
   ylab('Cardenolide Concentration (mg/g)')
-#dev.off()
+dev.off()
 
 #######
 
@@ -137,10 +137,10 @@ plot_ly(cards.data.scores[cards.data.scores$Tissue=='Wing',], x = ~NMDS1, y = ~N
 #####
 #Within each milkweed species, test for whether leaf and wing cardenolide composition is different
 darp <- cardenolides[-which(rowSums(cardenolides[,10:79]) == 0),]
-larp <- darp[darp$Species=='GOPH',]
+larp <- darp[darp$Species=='ASPEC',]
 cards.dist.mat <- vegdist(larp[,10:79], method = 'bray')
 
-adonis2(cards.dist.mat ~ Tissue, data = larp, permutations = 999)
+adonis2(cards.dist.mat ~ Tissue, data = larp, permutations = 1000)
 #ASCU: F = 57.2
 #AINC: F = 15.1
 #ASFA: F = 20.1
@@ -208,16 +208,20 @@ names(wing.cardenolides) #Description of columns:
 #maternal_family: maternal family of origin for monarch samples
 #sym.allo: refers to whether a given monarch was reared on a sympatric or allopatric host plant
 
+#### For table S1, get number of replicates for each maternal family across each species
+
+table(wing.cardenolides$Species, wing.cardenolides$maternal_family)
+
 #plot of raw data to explore patterns across species and monarch populations
 
-#pdf('./figures/Fig4xa.pdf', height = 9, width = 7)
+#pdf('./figures/Fig4xa.pdf', height = 6, width = 5)
 ggplot(wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),],
        aes(x = Mon.Pop, y = concentration))+
   geom_boxplot(aes(fill = Species), outlier.color = 'white', alpha = 0.3)+
   geom_point(aes(fill = Species), position = position_jitter(0.25), pch =21)+
   facet_wrap(~Species, scales = 'free')+
   scale_fill_manual(values = ascl.colors[c(1,2,5,6)])+
-  theme_light(base_size = 18)+
+  theme_light(base_size = 16)+
   xlab('Monarch Population')+
   ylab('Wing Cardenolide Concentration (mg/g)')+
   theme(legend.position = 'none')+
@@ -232,29 +236,96 @@ local.adaptation.seq.model <- lmer(concentration ~ Mon.Pop + Species + sym.allo 
 
 summary(local.adaptation.seq.model) #intercept is based on Australian monarchs on ASCU. All species are lower than ASCU (checks out), and Puerto Rico and Guam both sequester less than Australia, according to this model. However, there is no effect of local adaptation: in fact, sequestration on sympatric host plants is actually modestly lower (this is probably due to Guam and ASCU being a sympatric combo)
 
+Anova(local.adaptation.seq.model, type = 3)
+
 #For the next model, don't include a sympatric/allopatric term, but do include an interaction between monarch population and milkweed species, since there did seem to be 
 
-sequestration.model <- lmer(concentration ~  Mon.Pop*Species + Sex + (1|Pop/Plant.ID) + (1|maternal_family), data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])
+sequestration.model <- lmer(concentration ~  Mon.Pop*Species + Sex + (1|Pop/Plant.ID) + (1|maternal_family) , data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])
 
 summary(sequestration.model) #Once again ASCU and AU are the reference levels. ASCU higher than all other species. The strongest interaction term is for Puerto Rico on ASYR, which has a strongly negative estimate. Males sequester modestly less than females (I think this is a general pattern that has been reported before).
 
+plot_model(sequestration.model)
+ranef(sequestration.model)[[2]]
+hist(ranef(sequestration.model)[[2]][[1]], breaks = 10) #distribution of random intercepts for maternal families
+
+Anova(sequestration.model, type = 3)
+
+################
+
+#### For Figure S2, show variation among maternal families in sequestration amounts. Use random intercepts.
+
+randoms<-ranef(sequestration.model, condVar = TRUE)
+gg <- attr(ranef(sequestration.model, condVar = TRUE)[[2]], "postVar")
+
+rand.interc<-randoms$maternal_family
+
+df<-data.frame(Intercepts=randoms$maternal_family[,1],
+               sd.interc=2*sqrt(gg[,,1:length(gg)]),
+               lev.names=rownames(rand.interc))
+
+df$lev.names<-factor(df$lev.names,levels=df$lev.names[order(df$Intercepts)])
+
+#pdf('./figures/FigS2.pdf', height = 12, width = 8)
+ggplot(df,aes(lev.names,Intercepts))+
+  geom_hline(yintercept=0) +geom_errorbar(aes(ymin=Intercepts-sd.interc, 
+        ymax=Intercepts+sd.interc), width=0,color="black") + geom_point(size = 1)+
+  theme_bw() + xlab("Maternal Family") + ylab("")+
+  theme(axis.text.x=element_text(size=rel(1.2)),
+               axis.title.x=element_text(size = 12),
+               axis.text.y=element_text(size=rel(1.2)),
+               panel.grid.minor=element_blank())+ 
+  coord_flip()+
+  ylab('Random Intercept')
+#dev.off()
+
+#####################
+
 Anova(sequestration.model, type = 3) #does indeed indicate a highly significant monarch population x species effect, although that by itself is not indicative of local adaptation
 
-emmeans(sequestration.model, specs = ~Mon.Pop*Species, data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),]) #estimated marginal means for each species x monarch population combination
+emm.combos <- as.data.frame(emmeans(sequestration.model, specs = ~Mon.Pop*Species, data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])) #estimated marginal means for each species x monarch population combination
+
+#plot values for ASCU from the above
+
+
+#pdf('./figures/FigS5.pdf', height = 6.5, width = 6.5)
+ggplot(emm.combos[emm.combos$Species=='ASCU',], aes(x = Mon.Pop, y = emmean))+
+  geom_point(size = 3)+
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.3, size = 1)+
+  theme_light(base_size = 14)+
+  ylab('Estimated Marginal Mean - \nCardenolide Concentration (mg/g)')+
+  xlab('Monarch Population')+
+  ggtitle(label = 'Sequestration from ASCU')+
+  theme(plot.title = element_text(hjust = 0.5, face = 'italic'))+
+  annotate("text", x = 1, y = 18, label = "A", size = 6)+
+  annotate("text", x = 2, y = 16, label = "AB", size = 6)+
+  annotate("text", x = 3, y = 16, label = "A", size = 6)+
+  annotate("text", x = 4, y = 11.5, label = "B", size = 6)+
+  annotate("text", x = 5, y = 14, label = "AB", size = 6)+
+  annotate("text", x = 6, y = 18, label = "A", size = 6)
+#dev.off()
+
 
 summary(glht(sequestration.model, linfct = mcp(Mon.Pop = "Tukey"))) #gives a warning message related to interaction term. As an alternative, can create a new data column that corresponds to the combination of mon.pop x species, and then use this as a predictor.
 
 wing.cardenolides$combination <- paste(wing.cardenolides$Mon.Pop, wing.cardenolides$Species, sep = ' x ')
 
-sequestration.model.x <- lmer(concentration ~ combination + Mon.Pop + Sex + (1|Pop/Plant.ID) + (1|maternal_family), data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])
+sequestration.model.combo <- lmer(concentration ~ combination + Mon.Pop + Sex + (1|Pop/Plant.ID) + (1|maternal_family), data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])
 
-summary(glht(sequestration.model.x, linfct = mcp(Mon.Pop = "Tukey"))) #Can't get estimates because model includes too many levels for the combination term (n = 36) for the model to be fully specified.
+summary(glht(sequestration.model.combo, linfct = mcp(Mon.Pop = "Tukey"))) #Can't get estimates because model includes too many levels for the combination term (n = 36) for the model to be fully specified.
 
 emm.mon.pop <- as.data.frame(emmeans(sequestration.model, specs = ~Mon.Pop, data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])) #marginal means for monarch population only
 
+emm.mon.pop
+
+#pdf('./figures/FigS4.pdf', height = 6, width = 6)
 ggplot(emm.mon.pop, aes(x = Mon.Pop, y = emmean))+
-  geom_point()+
-  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.3)
+  geom_point(size = 3)+
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.4, size = 1)+
+  theme_light(base_size = 16)+
+  ylab('Estimated Marginal Mean - \nCardenolide Concentration (mg/g)')+
+  xlab('Monarch Population')
+#dev.off()
+
 
 #### Now, for the sake of comparison, create a reaction norm plot showing Puerto Rico and eastern North America with ASCU and ASYR. Build a function that enables pairwise reaction norms comparisons for any combination of two species and two populations.
 
@@ -262,13 +333,13 @@ rxn.norm.plot <- function(df1, pops, spp){
   df.use <- df1[df1$Species %in% spp & df1$Mon.Pop %in% pops,]
   agg.data <- do.call(data.frame, aggregate(concentration ~ Mon.Pop + Species, df.use, 
                         function(y) c(mean(y), sd(y) / sqrt(length(y)))))
-  names(agg.data)[3:4] <- c('Concentration', 'SE')
-  ggplot(agg.data, aes(x = Species, y = Concentration, group = Mon.Pop, fill = Mon.Pop))+
-    geom_errorbar(aes(ymin = Concentration - SE, ymax = Concentration + SE, col = Mon.Pop), 
-                  width = 0.1, size = 0.5)+
-    geom_point(size = 2, pch = 21)+
-    geom_line(size = 0.5, aes(col = Mon.Pop))+
-    theme_light(base_size = 8)+
+  names(agg.data)[3:4] <- c('concentration', 'SE')
+  ggplot(agg.data, aes(x = Species, y = concentration, group = Mon.Pop, fill = Mon.Pop))+
+    geom_errorbar(aes(ymin = concentration - SE, ymax = concentration + SE, col = Mon.Pop), 
+                  width = 0.1, size = 1)+
+    geom_point(size = 3, pch = 21)+
+    geom_line(size = 1)+
+    theme_light(base_size = 16)+
     scale_fill_manual(values = c('darkgreen','orange'))+
     scale_color_manual(values = c('darkgreen','orange'))+
     ylab('Wing Cardenolide Concentration (mg/g)')+
@@ -276,18 +347,78 @@ rxn.norm.plot <- function(df1, pops, spp){
           legend.background = element_rect(fill = 'grey95', colour = 'black'))
 }
 
-#pdf('./figures/Figx4.pdf', height = 4, width = 2)
-rxn.norm.plot(wing.cardenolides, pops = c('ENA','PR'), spp = c('ASYR','ASCU'))
+(rxn.norm1 <- rxn.norm.plot(wing.cardenolides, pops = c('ENA','PR'), spp = c('ASYR','ASCU')))
+
+#To above figure, add family-specific reaction norms
+
+family_averages <- aggregate(concentration ~ maternal_family + Mon.Pop + Species, wing.cardenolides[wing.cardenolides$Mon.Pop %in% c('ENA','PR') & wing.cardenolides$Species %in% c('ASYR','ASCU'),], mean)
+
+#pdf('./figures/Figx4.pdf', height = 6, width = 4)
+rxn.norm1 +
+  geom_point(data = family_averages, aes(col = Mon.Pop), alpha = 0.2)+
+  scale_color_manual(values = c('darkgreen','orange'))+
+  geom_line(data = family_averages, aes(group = maternal_family, col = Mon.Pop), alpha = 0.3)
 #dev.off()
 
-## Related to the above figure, conduct an analysis to see whether there is a potential tradeoff in sequestration ability across temperate versus tropical species (here, this is a standin for sequestration mode, as the temperate species require more active sequestration)
+##############################################################################################################
 
-wing.cardenolides$polar.spp <- ifelse(wing.cardenolides$Species %in% c('ASCU','GOPH'), 'tropical', 'temperate')
+## Test whether the polarity of sequestered cardenolides is different for Puerto Rican monarchs
 
-trop.model.seq <- lmer(concentration ~ polar.spp*Mon.Pop + (1|Species/Pop/Plant.ID) + (1|maternal_family), data = wing.cardenolides[!wing.cardenolides$Species %in% c('AINC','ASFA'),])
+##############################################################################################################
 
-summary(trop.model.seq) #Puerto Rico struggles mightily on temperate species, not surprisingly. Guam is actually modestly better on temperate species than would be suggested, but this effect would go away after correcting for multiple comparisons.
-Anova(trop.model.seq, type = 3) #again, reiterates that populations vary greatly in their ability to sequester depending on whether the host plant is tropical or temperate in origin
+head(wing.cardenolides)
+
+d2 <- merge(wing.cardenolides[,1:9], cardenolides.polarity, by = 'Sample')
+
+d2$pri <- ifelse(d2$Mon.Pop=='PR', 'Puerto\nRico', 'Other\nPopulations')
+
+aggregate(polarity ~ pri + Species, data = d2[d2$Tissue=='Wing',], mean)
+aggregate(polarity ~ pri + Species, data = d2[d2$Tissue=='Wing',], sd)
+
+polarity.model <- lmer(polarity ~ pri + Species + (1|maternal_family), data = d2[d2$Species %in% c('ASYR','ASPEC'),])
+
+summary(polarity.model)
+
+plot.polarity <- data.frame(emmeans(polarity.model, "pri", "Species"))
+
+#pdf('./figures/Figx4b.pdf', height = 6, width = 4)
+ggplot(plot.polarity, aes(x = pri, y = emmean))+
+  geom_point(size = 3)+
+  geom_errorbar(aes(ymax = upper.CL, ymin = lower.CL), width = 0.3, size= 0.7)+
+  facet_wrap(~Species)+
+  theme_light()+
+  ylab('Polarity Index')+
+  theme(axis.title.x = element_blank(), axis.text = element_text(size = 14), 
+        axis.title.y = element_text(size = 16), axis.text.x = element_text(angle = 60, hjust = 1))+
+  theme(strip.text = element_text(size = 16))
+#dev.off()
+
+
+##############################################################################################################
+
+## Plot correlation between sequestration from GOPH and ASCU across populations
+
+##############################################################################################################
+
+df1 <- aggregate(concentration ~   Species + Mon.Pop + maternal_family, mean, data = wing.cardenolides[wing.cardenolides$Species =='ASCU',])
+names(df1)[4] <- 'ASCU_conc'
+
+df2 <- aggregate(concentration ~  Species + Mon.Pop + maternal_family, mean, data = wing.cardenolides[wing.cardenolides$Species =='GOPH',])
+names(df2)[4] <- 'GOPH_conc'
+
+plot.card.cor <- merge(df1[,c(3,4)], df2, by = 'maternal_family')
+
+ggplot(plot.card.cor, aes(x = ASCU_conc, y = GOPH_conc))+
+  geom_point(aes(col = Mon.Pop))
+
+df3 <- aggregate(concentration ~ Species + Mon.Pop + maternal_family, mean, data = wing.cardenolides[wing.cardenolides$Species%in%c('ASCU','GOPH'),])
+
+ggplot(df3, aes(x = Species, y = concentration, col = Mon.Pop))+
+  geom_point()+
+  geom_line(aes(group = maternal_family))+
+  scale_color_manual(values = c('cyan','limegreen','forestgreen','purple','blue','orange'))+
+  facet_wrap(~Mon.Pop)+
+  theme_light()
 
 ######## Q for marianas comps: do ASCU genotypes from Rota really have lower cardenolides than from Guam
 
@@ -301,13 +432,111 @@ ascu.leaf.cards <- cardenolides[cardenolides$Species=='ASCU' & cardenolides$Tiss
 ascu.leaf.cards$Sample
 ascu.leaf.cards$Pop <- ifelse(ascu.leaf.cards$Sample %in% c('1004','1005','1014','1017','1018','1020','1024','1025','1027','1028','1030','1034','1037','1042','1059','1062','1057','172','186','195','203','216','218','224','L170','L175','L188','L190','L199','L206','L215'), 'Guam', 'Rota')
 
-summary(lm(concentration ~ Pop, data = ascu.leaf.cards)) #not significantly higher, but def in the same direction as field samples
+guam.rota.ascu <- lm(concentration ~ Pop, data = ascu.leaf.cards) #not significantly higher, but def in the same direction as field samples
+summary(guam.rota.ascu)
+
+emmeans(guam.rota.ascu, specs = 'Pop')
 
 ggplot(ascu.leaf.cards, aes(x = Pop, y = concentration))+
   geom_boxplot()
 
-
-
 ####### Unfortunately can not include the 5 monarchs collected in Guam in 2018, since they were analyzed in Rachel's lab on a different column
 
+#### Add a column for adjusted cardenolide concentration
+
+spp.leaf.means <- aggregate(concentration ~ Species, mean, data = cardenolides[cardenolides$Tissue=='Leaf',])
+
+ASCU <- wing.cardenolides[wing.cardenolides$Species=='ASCU',]
+
+ASCU$adjusted_values <- ASCU$concentration / spp.leaf.means[spp.leaf.means$Species=='ASCU',][[2]]
+
+ASCU$guam <- ifelse(ASCU$Mon.Pop=='GU', 'Guam', 'Others')
+
+aggregate(adjusted_values ~ guam, mean, data = ASCU)
+
+#pdf('../figures/fig5d.pdf',height = 7, width = 3)
+ggplot(ASCU, aes(x = guam, y = adjusted_values, col = guam))+
+  geom_boxplot(outlier.color = 'white', aes(fill = guam), alpha = 0.1)+
+  geom_point(position = position_jitterdodge(0.25))+
+  theme_light(base_size = 16)+
+  theme(axis.title.x = element_blank(), legend.position = 'none')+
+  ylab('Adjusted Cardenolide Concentration')+
+  scale_color_manual(values = c('mediumorchid','orange'))+
+  scale_fill_manual(values = c('mediumorchid','orange'))+
+  ggtitle('Reared Monarchs -\nHost Plant Adjusted')+
+  theme(plot.title = element_text(hjust = 0.5))
+#dev.off()
+
+ascu.comp.aves <- colMeans(wing.cardenolides[wing.cardenolides$Species=='ASCU',19:88])
+ascu.comp.guam.aves <- colMeans(wing.cardenolides[wing.cardenolides$Species=='ASCU' & wing.cardenolides$Mon.Pop=='GU',19:88])
+
+sort(ascu.comp.aves, decreasing = TRUE)
+sort(ascu.comp.guam.aves, decreasing = TRUE)
+
+###### 
+
+#Test for correlation between development time and sequestration
+
+#####
+
+adult.info$Date <- as.Date(adult.info$Date, "%m/%d/%Y")
+
+adult.info$development_time <- as.numeric(difftime(as.Date(adult.info$Eclosion, "%m/%d/%Y"),adult.info$Date, units = 'days') + 8)
+
+df2 <- merge(adult.info[,c(1,20,31)], wing.cardenolides, by = 'Sample')
+
+
+#pdf('./Figures/figS3.pdf',height = 8, width = 8)
+
+ggplot(na.omit(df2[df2$development_time > 15 & df2$development_time < 30,]), 
+       aes(x = development_time, y = concentration))+
+  geom_point()+
+  facet_wrap(~Species, scales = 'free_y')+
+  stat_smooth(method = 'lm', formula = y ~ poly(x, 1), col = 'black')+
+  theme_light(base_size = (16))+
+  ylab('Cardenolide Concentration (mg/g)')+
+  xlab('Days to Eclosion')+
+  theme(legend.title = element_blank())
+
+#dev.off()
+
+summary(lmer(concentration ~ scale(development_time) + Sex + Species + Mon.Pop + (1|Plant.ID) + (1|maternal_family), data = df2)) #don't get same pattern as Agrawal paper, where sequestration was correlated with development rate
+
+summary(lmer(concentration ~ scale(development_time) + Sex + Mon.Pop + (1|Plant.ID) + (1|maternal_family), data = df2[df2$Species=='ASFA',])) #don't get same pattern as Agrawal paper, where sequestration was correlated with development rate
+
+
+######## 
+
+#For figure S6, calculate coefficient of variation in sequestration from each species
+
+aggregate(concentration ~ Species, function(x) sd(x)/mean(x), data = wing.cardenolides)
+
+########
+
+## Get NMDS plot for ASYR separated by population
+
+ascl.nam.cards_nmds <- metaMDS(comm = wing.cardenolides[wing.cardenolides$Species == 'ASYR', 19:88], distance = 'bray', k = 10, trymax = 20)
+
+nam.data.scores <- cbind(wing.cardenolides[wing.cardenolides$Species == 'ASYR',1:18], scores(ascl.nam.cards_nmds))
+
+ggplot(nam.data.scores, aes(x = NMDS1, y = NMDS2, col = Mon.Pop))+
+  geom_point()+
+  stat_ellipse(aes(col = Mon.Pop), level = 0.95)
+
+##Alternative approach: take overall NMDS scores from more comprehensive overall analysis, then facet by species
+
+wing.cardenolides.nmds <- wing.cardenolides[wing.cardenolides$Sample != '1003.1' & wing.cardenolides$Sample != '418.1',] #first, omit two samples that have wonky NMDS scores (huge outliers that kind of make wonder whether they were either misassigned or contained only trace amounts)
+
+ascl.cards_nmds <- metaMDS(comm = wing.cardenolides.nmds[wing.cardenolides.nmds$Species %in% c('ASYR','ASPEC','GOPH','ASCU'), 19:88], distance = 'bray', k = 5, trymax = 200) #takes about 5 minutes to run with 500 iterations and k = 10
+
+ascl.wing.data.scores <- cbind(wing.cardenolides.nmds[wing.cardenolides.nmds$Species %in% c('ASYR','ASPEC','GOPH','ASCU'),1:18], scores(ascl.cards_nmds))
+
+ggplot(ascl.wing.data.scores, aes(x = NMDS1, y = NMDS2, col = Mon.Pop, fill = Mon.Pop))+
+  geom_point()+
+  facet_wrap(~Species, scales = 'free')+
+  stat_ellipse(aes(col = Mon.Pop), level = 0.95, geom = 'polygon', alpha = 0.05)+
+  theme_light(base_size = 14)+
+  scale_color_manual(values = c('cyan','limegreen','forestgreen','purple','blue','orange'))+
+  scale_fill_manual(values = c('cyan','limegreen','forestgreen','purple','blue','orange'))+
+  theme(legend.position = 'bottom', legend.title = element_blank())
 

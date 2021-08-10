@@ -47,7 +47,7 @@ display.samples <- c('406.2','547.1','749.1','805.4','940.1','1051.1')
 df1$species <- factor(df1$species, c('GOPH','ASCU','AINC','ASFA','ASYR','ASPEC'))
 ascl.colors <- c('blue','purple','coral','gold','dodgerblue','turquoise')
 
-pdf('../../figures/Figx.pdf', height = 10, width = 4)
+#pdf('../../figures/Figx.pdf', height = 10, width = 4)
 ggplot(df1[df1$RT > 0.7 & df1$RT < 11 & df1$sample %in% display.samples,],
        aes(x = RT, y = Value, col = species))+
   geom_line(size = 0.5)+
@@ -60,4 +60,62 @@ ggplot(df1[df1$RT > 0.7 & df1$RT < 11 & df1$sample %in% display.samples,],
   scale_color_manual(values = ascl.colors)+
   theme(legend.position = 'none')+
   ylim(c(0,150))
-dev.off()
+#dev.off()
+
+#######
+
+#Plotting single wing samples for display
+
+ggplot(df1[df1$RT > 0.7 & df1$RT < 12 & df1$sample =='805.4',], 
+       aes(x = RT, y = Value))+
+  geom_line(size = 0.5)+
+  geom_area(aes(fill = species), alpha = 0.3)+
+  theme_light(base_size = 18)+
+  ylab('Signal Intensity (mAU)')+
+  xlab('Retention Time (Minutes)')+
+  theme(legend.position = 'none')+
+  ylim(c(0,150))
+
+#######
+
+#Contrast Puerto Rico and 805.4 sample on ASYR
+
+df2 <- df1[df1$sample %in% c('807.1AU','801.1P'),]
+
+df2$display.value <- ifelse(df2$sample=='807.1AU', df2$Value, df2$Value*-1)
+
+df2$pop <- ifelse(df2$sample=='801.1P', "PR", "Other")
+
+ggplot(df2[df2$RT > 0.7 & df2$RT < 12,], 
+       aes(x = RT, y = display.value))+
+  geom_line(size = 0.5, aes(col = pop))+
+  geom_area(aes(fill = pop), alpha = 0.1)+
+  theme_light(base_size = 18)+
+  ylab('Signal Intensity')+
+  xlab('Retention Time (Minutes)')+
+  theme(legend.position = 'bottom', legend.title = element_blank())+
+  ylim(c(-75,75))+
+  scale_fill_manual(values = c('forestgreen','orange'))+scale_color_manual(values = c('forestgreen','orange'))+
+  theme(axis.text.y = element_blank())
+
+#Now do the same on ASCU (1039.3 = PR, 1030.1 = ENA)
+
+df3 <- df1[df1$sample %in% c('1051.1','1039.3'),]
+
+df3$display.value <- ifelse(df3$sample=='1051.1', df3$Value, df3$Value*-1)
+
+ggplot(df3[df3$RT > 0.7 & df3$RT < 12,], 
+       aes(x = RT, y = display.value))+
+  geom_line(size = 0.5, aes(col = sample))+
+  geom_area(aes(fill = sample), alpha = 0.1)+
+  theme_light(base_size = 18)+
+  ylab('Signal Intensity')+
+  xlab('Retention Time (Minutes)')+
+  theme(legend.position = 'none')+
+  scale_fill_manual(values = c('orange','forestgreen'))+scale_color_manual(values = c('orange','forestgreen'))+
+  theme(axis.text.y = element_blank())+
+  ylim(c(-150,150))
+
+########################################################
+
+
