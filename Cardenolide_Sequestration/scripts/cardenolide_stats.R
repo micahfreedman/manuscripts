@@ -90,7 +90,7 @@ cardenolides$Species <- factor(cardenolides$Species, c('GOPH','ASCU','AINC','ASF
 #make vector of colors for plotting
 ascl.colors <- c('blue','purple','coral','gold','dodgerblue','turquoise')
 
-pdf('./figures/Figx2.pdf', height = 6, width = 5)
+#pdf('./figures/Figx2.pdf', height = 6, width = 5)
 ggplot(cardenolides, aes(x = Tissue, y = concentration, fill = Species))+
   geom_boxplot(outlier.color = 'white', alpha = 0.3)+
   geom_point(position = position_jitterdodge(1), pch = 21)+
@@ -99,7 +99,7 @@ ggplot(cardenolides, aes(x = Tissue, y = concentration, fill = Species))+
   theme_light(base_size = 16)+
   theme(legend.position = 'none')+
   ylab('Cardenolide Concentration (mg/g)')
-dev.off()
+#dev.off()
 
 #######
 
@@ -123,7 +123,7 @@ cards.data.scores <- cbind(cardenolides[-which(cardenolides$concentration==0),1:
 #pdf('./figures/Figx3.pdf', height = 8, width = 8)
 ggplot(cards.data.scores, aes(x = NMDS1, y = NMDS2, col = Species, shape = Tissue))+
   geom_point(size = 2)+
-  scale_shape_manual(values = c(15,19))+
+  scale_shape_manual(values = c(21,15))+
   scale_color_manual(values = ascl.colors)+
   theme_light(base_size = 16)+
   theme(legend.position = c(0.2, 0.77), legend.background = element_rect(fill = 'grey95', color = 'black'), 
@@ -284,17 +284,24 @@ Anova(sequestration.model, type = 3) #does indeed indicate a highly significant 
 
 emm.combos <- as.data.frame(emmeans(sequestration.model, specs = ~Mon.Pop*Species, data = wing.cardenolides[!wing.cardenolides$Species %in% c('ASFA','AINC'),])) #estimated marginal means for each species x monarch population combination
 
+write.csv(emm.combos, file = './figures/TableSxx.csv', row.names = FALSE)
+
 #plot values for ASCU from the above
 
+emm.combos$sym.allo <- ifelse(emm.combos$Mon.Pop %in% c('PR','GU') & emm.combos$Species == 'ASCU', 'sympatric',
+                              ifelse(emm.combos$Mon.Pop %in% c('HI','AU') & 
+                                       emm.combos$Species=='GOPH', 'sympatric',
+                                     ifelse(emm.combos$Mon.Pop=='ENA' & emm.combos$Species == 'ASYR', 'sympatric', ifelse(emm.combos$Mon.Pop=='CA' & emm.combos$Species=='ASPEC', 'sympatric', 'allopatric'))))
 
 #pdf('./figures/FigS5.pdf', height = 6.5, width = 6.5)
-ggplot(emm.combos[emm.combos$Species=='ASCU',], aes(x = Mon.Pop, y = emmean))+
+ggplot(emm.combos[emm.combos$Species=='ASCU',], aes(x = Mon.Pop, y = emmean, col = sym.allo))+
   geom_point(size = 3)+
   geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.3, size = 1)+
   theme_light(base_size = 14)+
   ylab('Estimated Marginal Mean - \nCardenolide Concentration (mg/g)')+
   xlab('Monarch Population')+
   ggtitle(label = 'Sequestration from ASCU')+
+  scale_color_manual(values = c('black','red'))+
   theme(plot.title = element_text(hjust = 0.5, face = 'italic'))+
   annotate("text", x = 1, y = 18, label = "A", size = 6)+
   annotate("text", x = 2, y = 16, label = "AB", size = 6)+
@@ -304,6 +311,19 @@ ggplot(emm.combos[emm.combos$Species=='ASCU',], aes(x = Mon.Pop, y = emmean))+
   annotate("text", x = 6, y = 18, label = "A", size = 6)
 #dev.off()
 
+
+#pdf('./figures/Fig4a.pdf', height = 6, width = 5)
+ggplot(emm.combos, aes(x = Mon.Pop, y = emmean, col = sym.allo))+
+  geom_point(size = 3)+
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.3, size = 1)+
+  theme_light(base_size = 16)+
+  ylab('Estimated Marginal Mean - \nCardenolide Concentration (mg/g)')+
+  xlab('Monarch Population')+
+  scale_color_manual(values = c('black','red'))+
+  facet_wrap(~Species, scales = 'free')+
+  theme(legend.title = element_blank(), legend.position = 'bottom')+
+  theme(axis.text.x = element_text(angle = 75, hjust = 1))
+dev.off()
 
 summary(glht(sequestration.model, linfct = mcp(Mon.Pop = "Tukey"))) #gives a warning message related to interaction term. As an alternative, can create a new data column that corresponds to the combination of mon.pop x species, and then use this as a predictor.
 
@@ -394,6 +414,7 @@ ggplot(plot.polarity, aes(x = pri, y = emmean))+
 #dev.off()
 
 
+
 ##############################################################################################################
 
 ## Plot correlation between sequestration from GOPH and ASCU across populations
@@ -468,10 +489,33 @@ ggplot(ASCU, aes(x = guam, y = adjusted_values, col = guam))+
 #dev.off()
 
 ascu.comp.aves <- colMeans(wing.cardenolides[wing.cardenolides$Species=='ASCU',19:88])
-ascu.comp.guam.aves <- colMeans(wing.cardenolides[wing.cardenolides$Species=='ASCU' & wing.cardenolides$Mon.Pop=='GU',19:88])
 
 sort(ascu.comp.aves, decreasing = TRUE)
-sort(ascu.comp.guam.aves, decreasing = TRUE)
+
+######
+
+#Based on standards that Rachel ran sent from Anurag, we know the following compounds. 
+#5.93 is frugoside
+#7.40 is calactin
+#6.60 is calotropin
+#1.12 is aspecioside (should be in ASYR and APSEC)
+
+sum(sort(ascu.comp.aves, decreasing = TRUE)[c(1,4,5)]) / sum(ascu.comp.aves) #Frugoside, calactin, and calotropin comprise 51% of the total cardenolides sequestered from ASCU. Frugoside is the most abundant compound, with about 24% of the total amount. 
+
+goph.comp.aves <- colMeans(wing.cardenolides[wing.cardenolides$Species=='GOPH',19:88])
+
+sort(goph.comp.aves, decreasing = TRUE) #For GOPH, frugoside is also the most abundant compound. Calactin is the fourth most abundant compound, and calotropin is sixth.
+sum(sort(goph.comp.aves, decreasing = TRUE)[c(1,4,6)]) / sum(goph.comp.aves)
+
+asyr.comp.aves <- colMeans(wing.cardenolides[wing.cardenolides$Species=='ASYR',19:88])
+sort(asyr.comp.aves, decreasing = TRUE) #For ASYR, 1.06 (likely to be aspecioside, which registered at 1.12) is by far the most abundant compound.
+
+sort(asyr.comp.aves, decreasing = TRUE)[1] / sum(asyr.comp.aves) #Aspecioside comprises 48.3% of the total amount sequestered from ASYR
+
+aspec.comp.aves <- colMeans(wing.cardenolides[wing.cardenolides$Species=='ASPEC',19:88])
+sort(aspec.comp.aves, decreasing = TRUE)
+
+sort(aspec.comp.aves, decreasing = TRUE)[1] / sum(aspec.comp.aves) #Aspecioside comprises 44.0% of the total amount sequestered from ASPEC
 
 ###### 
 
@@ -504,6 +548,75 @@ summary(lmer(concentration ~ scale(development_time) + Sex + Species + Mon.Pop +
 
 summary(lmer(concentration ~ scale(development_time) + Sex + Mon.Pop + (1|Plant.ID) + (1|maternal_family), data = df2[df2$Species=='ASFA',])) #don't get same pattern as Agrawal paper, where sequestration was correlated with development rate
 
+#### Explicitly test for local adaptation that takes into account development time. Create a new metric (sequestered cardenolides divided by development time) and use this as a response variable.
+
+df2$cards.adjusted <- df2$concentration/df2$development_time
+
+df3 <- df2[df2$development_time > 15,]
+
+model.dev.time.adjusted <- lmer(cards.adjusted ~ Mon.Pop + Species + sym.allo + Sex + (1|Pop/Plant.ID) + (1|maternal_family), data = df3[!df3$Species %in% c('ASFA','AINC'),])
+
+summary(model.dev.time.adjusted) #no real difference, as suggested by the lack of a correlation between sequestration and development time shown in plots previous
+
+#Redo reaction norm figure
+
+aggregate(cards.adjusted ~ Mon.Pop + Species, data = df3, mean)
+
+df3$pr.vs.all <- ifelse(df3$Mon.Pop == 'PR', 'PR', 'other')
+
+aggregate(cards.adjusted ~ pr.vs.all + Species, df3, mean)
+
+adj.means <- aggregate(cards.adjusted ~ Mon.Pop + Species, df3[!df3$Species %in% c('ASFA','AINC'),], mean)
+adj.sd <- aggregate(cards.adjusted ~ Mon.Pop + Species, df3[!df3$Species %in% c('ASFA','AINC'),], sd)
+names(adj.sd)[3] <- 'SD'
+plot.adj <- merge(adj.means, adj.sd)
+
+(0.313 - 0.242) / 0.242  #29.3% higher adjusted sequestration on GOPH
+(0.705 - 0.542) / 0.542 #30.0% higher adjusted sequestration of ASCU
+
+pdf('./figures/figs4a.pdf', height = 6, width = 6)
+ggplot(plot.adj, aes(x = Mon.Pop, y = cards.adjusted))+
+  geom_point(size = 3)+
+  geom_errorbar(aes(ymin = cards.adjusted-SD, ymax = cards.adjusted+SD), width = 0.3, size = 1)+
+  theme_light(base_size = 16)+
+  ylab('Sequestration Efficiency')+
+  xlab('Monarch Population')+
+  facet_wrap(~Species, scales = 'free')+
+  theme(legend.title = element_blank(), legend.position = 'bottom')+
+  theme(axis.text.x = element_text(angle = 75, hjust = 1))
+dev.off()
+
+#incorporating development time eliminates most of the modest sequestration advantage of Puerto Rican monarchs on ASCU, but they still have an advantage of GOPH. 
+
+ggplot(df3[df3$Mon.Pop %in% c('ENA','PR') & df3$Species %in% c('ASYR','ASCU'),], 
+       aes(x = Mon.Pop, y = cards.adjusted))+
+  geom_point()+
+  facet_wrap(~Species)
+
+##############################
+
+#Within each species, test for correlations in production of major compounds
+
+pdf('./figures/FigSxxxxxx.pdf', height = 8, width = 8)
+
+par(mfrow = c(2, 2))
+
+ASCU <- wing.cardenolides[wing.cardenolides$Species=='ASCU',]
+ascu.M <- cor(ASCU[,names(sort(ascu.comp.aves, decreasing = TRUE)[1:6])])
+corrplot(ascu.M, method = 'circle', title = 'ASCU', type = "upper", col=colorRampPalette(c("blue","white","orange"))(200), outline = 'black', diag = FALSE, mar = c(0,0,2,0))
+GOPH <- wing.cardenolides[wing.cardenolides$Species=='GOPH',]
+goph.M <- cor(GOPH[,names(sort(goph.comp.aves, decreasing = TRUE)[1:6])])
+corrplot(goph.M, method = 'circle', title = 'GOPH', type = "upper", col=colorRampPalette(c("blue","white","orange"))(200), outline = 'black', diag = FALSE, mar = c(0,0,2,0))
+ASYR <- wing.cardenolides[wing.cardenolides$Species=='ASYR',]
+asyr.M <- cor(ASYR[,names(sort(asyr.comp.aves, decreasing = TRUE)[1:5])])
+corrplot(asyr.M, method = 'circle', title = 'ASYR', type = "upper", col=colorRampPalette(c("blue","white","orange"))(200), outline = 'black', diag = FALSE, mar = c(0,0,2,0))
+ASPEC <- wing.cardenolides[wing.cardenolides$Species=='ASPEC',]
+aspec.M <- cor(ASPEC[,names(sort(aspec.comp.aves, decreasing = TRUE)[1:5])])
+corrplot(aspec.M, method = 'circle', title = 'ASPEC', type = "upper", col=colorRampPalette(c("blue","white","orange"))(200), outline = 'black', diag = FALSE, mar = c(0,0,2,0))
+
+dev.off()
+
+par(mfrow = c(1, 1))
 
 ######## 
 
@@ -511,11 +624,12 @@ summary(lmer(concentration ~ scale(development_time) + Sex + Mon.Pop + (1|Plant.
 
 aggregate(concentration ~ Species, function(x) sd(x)/mean(x), data = wing.cardenolides)
 
-########
+#############################
+#############################
 
 ## Get NMDS plot for ASYR separated by population
 
-ascl.nam.cards_nmds <- metaMDS(comm = wing.cardenolides[wing.cardenolides$Species == 'ASYR', 19:88], distance = 'bray', k = 10, trymax = 20)
+ascl.nam.cards_nmds <- metaMDS(comm = wing.cardenolides[wing.cardenolides$Species == 'ASYR', 19:88], distance = 'bray', k = 3, trymax = 20)
 
 nam.data.scores <- cbind(wing.cardenolides[wing.cardenolides$Species == 'ASYR',1:18], scores(ascl.nam.cards_nmds))
 
@@ -525,18 +639,50 @@ ggplot(nam.data.scores, aes(x = NMDS1, y = NMDS2, col = Mon.Pop))+
 
 ##Alternative approach: take overall NMDS scores from more comprehensive overall analysis, then facet by species
 
-wing.cardenolides.nmds <- wing.cardenolides[wing.cardenolides$Sample != '1003.1' & wing.cardenolides$Sample != '418.1',] #first, omit two samples that have wonky NMDS scores (huge outliers that kind of make wonder whether they were either misassigned or contained only trace amounts)
+wing.cardenolides.nmds <- wing.cardenolides[wing.cardenolides$Sample != '1003.1' & wing.cardenolides$Sample != '418.1' & wing.cardenolides$Sample != '822.1',] #first, omit three samples that have wonky NMDS scores (huge outliers that kind of make wonder whether they were either misassigned or contained only trace amounts)
 
 ascl.cards_nmds <- metaMDS(comm = wing.cardenolides.nmds[wing.cardenolides.nmds$Species %in% c('ASYR','ASPEC','GOPH','ASCU'), 19:88], distance = 'bray', k = 5, trymax = 200) #takes about 5 minutes to run with 500 iterations and k = 10
 
 ascl.wing.data.scores <- cbind(wing.cardenolides.nmds[wing.cardenolides.nmds$Species %in% c('ASYR','ASPEC','GOPH','ASCU'),1:18], scores(ascl.cards_nmds))
 
+#pdf('./figures/FigSx2.pdf', height = 8, width = 8)
 ggplot(ascl.wing.data.scores, aes(x = NMDS1, y = NMDS2, col = Mon.Pop, fill = Mon.Pop))+
   geom_point()+
   facet_wrap(~Species, scales = 'free')+
   stat_ellipse(aes(col = Mon.Pop), level = 0.95, geom = 'polygon', alpha = 0.05)+
-  theme_light(base_size = 14)+
+  theme_light(base_size = 16)+
   scale_color_manual(values = c('cyan','limegreen','forestgreen','purple','blue','orange'))+
   scale_fill_manual(values = c('cyan','limegreen','forestgreen','purple','blue','orange'))+
   theme(legend.position = 'bottom', legend.title = element_blank())
+#dev.off()
 
+ascl.cards.dist.mat <- vegdist(wing.cardenolides.nmds[wing.cardenolides.nmds$Species %in% c('ASCU','GOPH','ASYR','ASPEC'),19:88], method = 'bray')
+
+adonis2(ascl.cards.dist.mat ~ Mon.Pop*Species + Sex, data = wing.cardenolides.nmds[wing.cardenolides.nmds$Species %in% c('ASCU','GOPH','ASYR','ASPEC'),], permutations = 1000)
+
+##############
+
+#Test for correlation between leaf and wing cardenolides -- here use matched samples
+
+wing.cardenolides$sample_match <- wing.cardenolides$Plant.ID
+
+leaf.cardenolides <- cardenolides[cardenolides$Tissue=='Leaf',]
+
+leaf.cardenolides$sample_match <- parse_number(leaf.cardenolides$Sample)
+
+lw.cor <- merge(wing.cardenolides[,c('Mon.Pop','Sex','maternal_family','Species','concentration','sample_match')], leaf.cardenolides[,c('concentration','sample_match')], by = 'sample_match')
+
+names(lw.cor)[6:7] <- c('wing_conc', 'leaf_conc')
+
+lw.cor <- lw.cor[-which(lw.cor$Species=='ASYR' & lw.cor$leaf_conc > 3),] #drop one ASYR outlier whose leaf concentration is 10x higher than all other samples
+
+#pdf('./figures/figs8.pdf', height = 6, width = 6)
+ggplot(lw.cor[!lw.cor$Species %in% c('AINC','ASFA'),], 
+       aes(x = leaf_conc, y = wing_conc))+
+  theme_light(base_size = 16)+
+  geom_point()+
+  facet_wrap(~Species, scales = 'free')+
+  stat_smooth(method = 'lm')+
+  xlab('Leaf Cardenolide Concentration (mg/g)')+
+  ylab('Wing Cardenolide Concentration (mg/g)')
+#dev.off()

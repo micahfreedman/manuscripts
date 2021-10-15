@@ -84,19 +84,23 @@ df2 <- df1[df1$sample %in% c('807.1AU','801.1P'),]
 
 df2$display.value <- ifelse(df2$sample=='807.1AU', df2$Value, df2$Value*-1)
 
-df2$pop <- ifelse(df2$sample=='801.1P', "PR", "Other")
+df2$pop <- ifelse(df2$sample=='801.1P', "PR", "Australia")
 
+pdf('~/Documents/GitHub/Sites/manuscripts/Cardenolide_Sequestration/figures/chromatogram_asyr_comp.pdf', height = 5, width = 7)
 ggplot(df2[df2$RT > 0.7 & df2$RT < 12,], 
        aes(x = RT, y = display.value))+
   geom_line(size = 0.5, aes(col = pop))+
-  geom_area(aes(fill = pop), alpha = 0.1)+
-  theme_light(base_size = 18)+
+  geom_area(aes(fill = pop), alpha = 0.2)+
+  theme_dark(base_size = 14)+
   ylab('Signal Intensity')+
   xlab('Retention Time (Minutes)')+
   theme(legend.position = 'bottom', legend.title = element_blank())+
   ylim(c(-75,75))+
-  scale_fill_manual(values = c('forestgreen','orange'))+scale_color_manual(values = c('forestgreen','orange'))+
-  theme(axis.text.y = element_blank())
+  scale_fill_manual(values = c('cyan','orange'))+scale_color_manual(values = c('cyan','orange'))+
+  theme(axis.text.y = element_blank())+
+  annotate("text", x = 1.1, y = -35, label = 'aspecioside', angle = 90, color = 'white')+
+  annotate("text", x = 10, y = -35, label = 'digitoxin\n(value truncated)',angle = 90, color = 'white')
+dev.off()
 
 #Now do the same on ASCU (1039.3 = PR, 1030.1 = ENA)
 
