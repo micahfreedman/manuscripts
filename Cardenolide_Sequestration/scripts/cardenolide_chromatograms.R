@@ -1,9 +1,17 @@
-### Plotting raw data from cardenolide readout
+######################################################################################
+######## Script for plotting raw data from cardenolide readout #######################
+######################################################################################
+
+#IMPORTANT NOTE**: Before starting to execute this script, unzip the folder that is labelled chromatograms.zip. This will create a new folder in the ./data directory that contains all of the .txt files corresponding to the raw chromatograms that will be used for visualization.
+
+#This script was used to produce Figure 2A and Figure S5
+
+#load libraries
 
 library(dplyr)
 library(ggplot2)
 
-setwd("~/Documents/GitHub/Sites/manuscripts/Cardenolide_Sequestration/data/chromatograms/")
+#setwd() - here, you will be working from the directory that is ./data/chromatograms/
 
 all_chromatograms <- list() #empty list to read in data
 
@@ -47,7 +55,11 @@ display.samples <- c('406.2','547.1','749.1','805.4','940.1','1051.1')
 df1$species <- factor(df1$species, c('GOPH','ASCU','AINC','ASFA','ASYR','ASPEC'))
 ascl.colors <- c('blue','purple','coral','gold','dodgerblue','turquoise')
 
-#pdf('../../figures/Figx.pdf', height = 10, width = 4)
+#as per reviewer request, rename 
+
+df1$species <- recode_factor(df1$species, GOPH = 'G. physocarpus',ASCU = 'A. curassavica',AINC = 'A. incarnata',ASFA = 'A. fascicularis',ASYR = 'A. syriaca',ASPEC = 'A. speciosa')
+
+#pdf('../../figures/Figure2A.pdf', height = 12, width = 8)
 ggplot(df1[df1$RT > 0.7 & df1$RT < 11 & df1$sample %in% display.samples,],
        aes(x = RT, y = Value, col = species))+
   geom_line(size = 0.5)+
@@ -59,10 +71,13 @@ ggplot(df1[df1$RT > 0.7 & df1$RT < 11 & df1$sample %in% display.samples,],
   scale_fill_manual(values = ascl.colors)+
   scale_color_manual(values = ascl.colors)+
   theme(legend.position = 'none')+
+  theme(strip.text = element_text(face = 'italic', size = 14))+
   ylim(c(0,150))
 #dev.off()
 
-#######
+####################################################################################
+####################################################################################
+####################################################################################
 
 #Plotting single wing samples for display
 
@@ -76,9 +91,11 @@ ggplot(df1[df1$RT > 0.7 & df1$RT < 12 & df1$sample =='805.4',],
   theme(legend.position = 'none')+
   ylim(c(0,150))
 
-#######
+####################################################################################
+####################################################################################
+####################################################################################
 
-#Contrast Puerto Rico and 805.4 sample on ASYR
+#Contrast Puerto Rican and Australian sample on ASYR
 
 df2 <- df1[df1$sample %in% c('807.1AU','801.1P'),]
 
@@ -86,7 +103,7 @@ df2$display.value <- ifelse(df2$sample=='807.1AU', df2$Value, df2$Value*-1)
 
 df2$pop <- ifelse(df2$sample=='801.1P', "PR", "Australia")
 
-pdf('~/Documents/GitHub/Sites/manuscripts/Cardenolide_Sequestration/figures/chromatogram_asyr_comp.pdf', height = 5, width = 7)
+#pdf('../../figures/FigureS5.pdf', height = 5, width = 7)
 ggplot(df2[df2$RT > 0.7 & df2$RT < 12,], 
        aes(x = RT, y = display.value))+
   geom_line(size = 0.5, aes(col = pop))+
@@ -100,13 +117,13 @@ ggplot(df2[df2$RT > 0.7 & df2$RT < 12,],
   theme(axis.text.y = element_blank())+
   annotate("text", x = 1.1, y = -35, label = 'aspecioside', angle = 90, color = 'white')+
   annotate("text", x = 10, y = -35, label = 'digitoxin\n(value truncated)',angle = 90, color = 'white')
-dev.off()
+#dev.off()
 
 #Now do the same on ASCU (1039.3 = PR, 1030.1 = ENA)
 
-df3 <- df1[df1$sample %in% c('1051.1','1039.3'),]
+df3 <- df1[df1$sample %in% c('1030.1','1039.3'),]
 
-df3$display.value <- ifelse(df3$sample=='1051.1', df3$Value, df3$Value*-1)
+df3$display.value <- ifelse(df3$sample=='1030.1', df3$Value, df3$Value*-1)
 
 ggplot(df3[df3$RT > 0.7 & df3$RT < 12,], 
        aes(x = RT, y = display.value))+
@@ -115,10 +132,12 @@ ggplot(df3[df3$RT > 0.7 & df3$RT < 12,],
   theme_light(base_size = 18)+
   ylab('Signal Intensity')+
   xlab('Retention Time (Minutes)')+
-  theme(legend.position = 'none')+
   scale_fill_manual(values = c('orange','forestgreen'))+scale_color_manual(values = c('orange','forestgreen'))+
   theme(axis.text.y = element_blank())+
+  theme(legend.position = 'bottom', legend.title = element_blank())+
   ylim(c(-150,150))
+
+#Unlike ASYR, Puerto Rican monarchs have sequestration profiles that look generally comparable to other populations on ASCU
 
 ########################################################
 

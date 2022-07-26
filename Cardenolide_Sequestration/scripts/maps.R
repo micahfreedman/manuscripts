@@ -1,4 +1,4 @@
-### maps
+### Script for generating maps used in Figure 1A and Figure 5A
 
 library('ggmap')
 library('sf')
@@ -7,6 +7,8 @@ library("rnaturalearthdata")
 library('rgeos')
 library('rgdal')
 library('maps')
+
+#setwd()
 
 world <- ne_countries(scale= 'medium',returnclass = 'sf') #scale = 110 or scale = 'medium' seem to work well; scale = 10 takes a long time
 
@@ -44,11 +46,11 @@ plot.map<- function(database,center,...){
   map(Obj,...)
 }
 
-#pdf('./figures/Figx1a.pdf', height = 12, width = 24)
+#pdf('./figures/Figure1A.pdf', height = 12, width = 24) #Note that this just produces the background map and that annotations were added manually in Keynote
 
 plot.map("world", fill=TRUE, col="cornsilk", bg="aliceblue", center = 200, ylim=c(-60, 90), mar=c(0,0,0,0))
 
-#dev.off()
+#dev.off() 
 
 ########
 
@@ -59,8 +61,6 @@ library(rnaturalearthhires)
 new_world <- ne_countries(scale= 10,returnclass = 'sf')
 
 marianas <- subset(new_world, admin == c("Guam", "Northern Mariana Islands"))
-
-
 
 (map.marianas <- ggplot(data = marianas) +
   geom_sf(fill = "antiquewhite1")+
@@ -75,4 +75,4 @@ marianas <- subset(new_world, admin == c("Guam", "Northern Mariana Islands"))
   annotate("text", x= 145.5, y= 15.2, label = "Saipan", cex = 4)+
   annotate("text", x= 144.8, y= 15.5, label = "Mariana Islands", cex = 6))
 
-ggsave(map.marianas, file = './figures/Fig5xa.pdf', height = 8, width = 5)
+#ggsave(map.marianas, file = './figures/Figure5A.pdf', height = 8, width = 5)
