@@ -272,7 +272,7 @@ head(gbif.summer)
 
 library(ggmap)
 
-register_google(key = "api key here-M") 
+register_google(key = "api key here-M") #
 
 nMap <- get_map("Topeka, Kansas",zoom=4,maptype="satellite",source="google")
 
