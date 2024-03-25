@@ -15,8 +15,8 @@ library(rnaturalearthdata)
 library(sf)
 library(rgdal)
 library(ggsn)
-library(plyr)
 library(cowplot)
+library(ggspatial)
 
 ### first do zoomed out map of California 
 
@@ -31,21 +31,36 @@ ggmap(sat_california)+
   theme(axis.title = element_blank(), axis.text = element_blank())
 #dev.off()
 
+world <- ne_countries(scale='large',returnclass = 'sf')
+states <- ne_download(scale = 'medium', type = "states", returnclass = 'sf')
+lakes <- ne_download(scale = "medium", type = "lakes", category = "physical", returnclass = 'sf') #include a layer for major lakes
+
+
+#pdf(file = './figures/Fig1a1.pdf', height = 4, width = 6)
+ggplot(data = world)+
+  geom_sf(fill = "antiquewhite1") +
+  geom_sf(data = states, fill = 'antiquewhite1')+
+  geom_sf(data = lakes, fill = "lightcyan", color = "gray40")+
+  theme(panel.grid.major = element_line(colour = 'white', linetype = "dashed",size = 0.5), 
+        panel.background = element_rect(fill = "lightcyan"),panel.border = element_rect(fill = NA))+
+  coord_sf(xlim = c(-130, -110), ylim = c(25, 45)) +
+  annotate("rect", xmin = -121, xmax = -117, ymin = 32.5, ymax = 35, col = 'red', fill = 'white', alpha = 0.2)
+#dev.off()  
+
 sites<-read.csv("./data_files/site_coordinates.csv",row.names=NULL,header = T) #read in coordinates for site-level locations
 
-sites$IM <- ifelse(sites$Site %in% c('Catalina','Santa Cruz','Santa Rosa'), 'island', 'mainland')
-
-world <- ne_countries(scale='medium',returnclass = 'sf')
-usa <- subset(world, admin == "United States of America")
+sites$IM <- ifelse(sites$Site %in% c('Catalina','Santa_Cruz','Santa_Rosa'), 'island', 
+                   ifelse(sites$Site %in% c('Rancho_Santa_Ana','Santa_Barbara'), 'common garden', 'mainland'))
 
 #pdf(file = './figures/Fig1a2.pdf', height = 4, width = 6)
-ggplot(data = usa) +
+ggplot(data = world) +
   geom_sf(fill = "antiquewhite1") +
-  geom_point(data = sites, aes(x = -long, y = lat, col = IM), size = 3)+
-  scale_color_manual(values = c('blue','red'))+
-    coord_sf(xlim = c(-121, -117), ylim = c(32, 35)) +
+  geom_point(data = sites, aes(x = -long, y = lat, col = IM), size = 4, alpha = 0.5)+
+  scale_color_manual(values = c('black','blue','red'))+
+    coord_sf(xlim = c(-121, -117), ylim = c(32.5, 35)) +
     theme(panel.grid.major = element_line(colour = gray(0.9), linetype = "dashed",size = 0.5), 
-          panel.background = element_rect(fill = "aliceblue"),panel.border = element_rect(fill = NA))+
+          panel.background = element_rect(fill = "lightcyan"),panel.border = element_rect(fill = NA))+
+  annotation_scale(line_width = 0.5)+
   theme(legend.position = 'none', axis.title = element_blank())+
   annotate("text", x= -118.9, y= 33.3, label = "Catalina", cex = 4, col = 'blue')+
   annotate("text", x= -119.3, y= 33.85, label = "Santa Cruz", cex = 4, col = 'blue')+
@@ -53,10 +68,12 @@ ggplot(data = usa) +
   annotate("text", x = -120.2, y = 34.7, label = "Gaviota", cex = 4, col = 'red')+
   annotate("segment", x = -119.2, xend = -118.81, y = 34.4, yend = 34.075, col = 'red')+
   annotate("text", x = -118.7, y = 34.5, label = "Santa Monica Mtns.", cex = 4, col = 'red')+
-  annotate("segment", x = -118.65, xend = -118, y = 34.092, yend = 34.092, col = 'red')+
-  annotate("text", x = -117.5, y = 34.1, label = "Stunt Ranch", cex = 4, col = 'red') #occasionally returns weird error message saying "polygon edge not found" -- this seems to be a bug and only shows up periodically, possibly depending on the size of the plot window?
+  annotate("segment", x = -118.65, xend = -118.3, y = 34.092, yend = 34.2, col = 'red')+
+  annotate("text", x = -117.9, y = 34.3, label = "Stunt Ranch", cex = 4, col = 'red')+
+  annotate("text", x = -119.2, y = 34.8, label = "Santa Barbara\nBotanic Garden", cex = 4, col = 'black')+
+  annotate("segment", x = -119.7, xend = -119.5, y = 34.45, yend = 34.65, col = 'black')+
+  annotate("text", x = -117.5, y = 33.9, label = "Rancho Santa Ana\nBotanic Garden", cex = 4, col = 'black')
 #dev.off()
-
 
 ####################
 
@@ -248,7 +265,28 @@ dev.off()
 
 stachys_coordinates <- read.csv('./data_files/stachys_coordinates.csv')
 
-pdf('./figures/Fig3a.pdf', height = 6, width = 6)
+pdf('./figures/FigSB_map.pdf', height = 6, width = 6)
+ggplot(data = world) +
+  geom_sf(fill = "antiquewhite1") +
+  geom_point(data = stachys_coordinates, aes(x = -long, y = lat, fill = Site), size = 4, pch = 21)+
+  scale_fill_manual(values = c('orange','darkorange4','black','blue','red','darkblue','gold'))+
+  coord_sf(xlim = c(-121, -118), ylim = c(33, 35)) +
+  theme(panel.grid.major = element_line(colour = gray(0.9), linetype = "dashed",size = 0.5), 
+        panel.background = element_rect(fill = "lightcyan"),panel.border = element_rect(fill = NA))+
+  annotation_scale(line_width = 0.5)+
+  theme(legend.position = 'none', axis.title = element_blank())+
+  annotate("text", x= -119.3, y= 33.85, label = "Santa Cruz", cex = 4, col = 'blue')+
+  annotate("text", x = -120.5, y = 33.8, label = "Santa Rosa", cex = 4, col = 'darkblue')+
+  annotate("text", x = -120.3, y = 34.7, label = "Gaviota", cex = 4, col = 'darkorange4')+
+  annotate("text", x = -118.6, y = 34.3, label = "Santa Monica Mtns.", cex = 4, col = 'red')+
+  annotate("text", x = -120.2, y = 34.35, label = "El Capitan", cex = 4, col = 'orange')+
+  annotate("text", x = -118.8, y = 33.95, label = "Zuma", cex = 4, col = 'gold')+
+  annotate("text", x = -119.2, y = 34.66, label = "Santa Barbara\nBotanic Garden", cex = 4, col = 'black')
+dev.off()
+  
+
+
+
 ggplot(data = usa) +
   geom_sf(fill = "antiquewhite1") +
   geom_point(data = stachys_coordinates, aes(x = -long, y = lat, fill = Site), size = 4, pch = 21)+

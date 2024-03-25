@@ -18,12 +18,14 @@ library(lemon)
 
 #load data
 
-setwd('~/Documents/grad_school/Manuscripts/Monarch local adaptation/Final_submission/Analysis_and_data/')
+#setwd()
 
 lad <- read.csv("./larval_data.csv")
 
 head(lad)
 str(lad)
+
+lad$Mon.Pop <- factor(lad$Mon.Pop)
 
 lad$Mon.Pop <- factor(lad$Mon.Pop, levels(lad$Mon.Pop)[c(4,5,2,3,1,6)]) #rearrange factor levels for monarch population
 
@@ -182,11 +184,11 @@ agg.pop$Species <- factor(agg.pop$Species, spp.order)
     theme(axis.text = element_text(size = 12), axis.title = element_text(size =16),
           strip.text = element_text(size = 16, face = 'italic'), 
           axis.text.x = element_text(angle = 90, hjust = 1))+
-    theme(strip.background =element_rect(fill='cornsilk'))+
+    theme(strip.background =element_rect(fill='grey90'))+
     annotate('rect', ymin = 0, ymax = 1.25, xmin = 0.5, xmax = 2.4, 
-             col = 'blue', fill = NA, size = 0.7)+
+             col = 'forestgreen', fill = NA, size = 0.7)+
     annotate('rect', ymin = 0, ymax = 1.25, xmin = 2.5, xmax = 6.5, 
-             col = 'forestgreen', fill = NA, size = 0.7))
+             col = 'gold', fill = NA, size = 0.7))
 
 Fig4a1 <- Fig4a1 + facet_rep_wrap(~Species, repeat.tick.labels = 'bottom') #replot data with factor levels below each panel
 
@@ -294,7 +296,7 @@ summary(model.cat.growth.rev2) #no evidence for significant interaction between 
 
 lad$anc_der_host <- ifelse(lad$Species %in% c('ASCU','GOPH'), 'derived_host', 'ancestral_host')
 
-model.cat.growth.xx <- lmer((log(Weight)) ~ Species + Mon.Pop + ancestral_pop*anc_der_host + sym.allo + (1|Pop/Plant.ID) + (1|Mon.ID)  + (1|Group)  + Usage + GH + scale(exp.days) + Year, data = lad) #same as previous models, with with interaction between ancestral/derived status of both monarch populations and host plant species; here an interaction might indicate that derived populations struggle on ancestral hosts, or vice versa
+model.cat.growth.xx <- lmer((log(Weight)) ~ Species + Mon.Pop + ancestral_pop*anc_der_host + sym.allo + (1|Pop/Plant.ID) + (1|Mon.ID)  + (1|Group)  + Usage + GH + scale(exp.days) + Year, data = lad) #same as previous models, but with interaction between ancestral/derived status of both monarch populations and host plant species; here an interaction might indicate that derived populations struggle on ancestral hosts, or vice versa
 
 summary(model.cat.growth.xx) ## get modest interaction term, but in the opposite direction to that predicted: derived populations have a DISADVANTAGE overall on derived hosts; part of this effect could be the terrible performance of Puerto Rico on GOPH, although some of that should also be captured in the sym.allo term
 

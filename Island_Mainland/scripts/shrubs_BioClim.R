@@ -62,7 +62,7 @@ r <- getData("worldclim",var="bio",res=2.5)
 r2 <- r[[c(1:19)]]
 
 #names(r2) <- c("BIO1 = Annual Mean Temperature", "BIO2 = Mean Diurnal Range", "BIO3 = Isothermality",
-"BIO4 = Temperature Seasonality", "BIO5 = Max Temperature of Warmest Month", "BIO6 = Min Temperature of Coldest Month", "BIO7 = Temperature Annual Range (BIO5-BIO6)", "BIO8 = Mean Temperature of Wettest Quarter", "BIO9 = Mean Temperature of Driest Quarter", "BIO10 = Mean Temperature of Warmest Quarter", "BIO11 = Mean Temperature of Coldest Quarter", "BIO12 = Annual Precipitation", "BIO13 = Precipitation of Wettest Month", "BIO14 = Precipitation of Driest Month", "BIO15 = Precipitation Seasonality (Coefficient of Variation)", "BIO16 = Precipitation of Wettest Quarter", "BIO17 = Precipitation of Driest Quarter", "BIO18 = Precipitation of Warmest Quarter", "BIO19 = Precipitation of Coldest Quarter")#
+#"BIO4 = Temperature Seasonality", "BIO5 = Max Temperature of Warmest Month", "BIO6 = Min Temperature of Coldest #Month"#, "BIO7 = Temperature Annual Range (BIO5-BIO6)", "BIO8 = Mean Temperature of Wettest Quarter", "BIO9 = Mean Temperature of Driest Quarter", "BIO10 = Mean Temperature of Warmest Quarter", "BIO11 = Mean Temperature of Coldest Quarter", "BIO12 = Annual Precipitation", "BIO13 = Precipitation of Wettest Month", "BIO14 = Precipitation of Driest Month", "BIO15 = Precipitation Seasonality (Coefficient of Variation)", "BIO16 = Precipitation of Wettest Quarter", "BIO17 = Precipitation of Driest Quarter", "BIO18 = Precipitation of Warmest Quarter", "BIO19 = Precipitation of Coldest Quarter")#
 
 #specify latitudes and longitudes for each sampled point to extract climate data
 
@@ -78,9 +78,26 @@ values <- extract(r2,points)
 
 (bioclim.vars <- cbind(plant.mapping, values))
 
-#### get prinicipal components of climatic data
+bioclim_layer <- vector()
+cell_count_unique <- vector()
 
-drop.columns.pca.clim <- c("plant.ID", "Site", "lat", "lon", "species") #select columns to exlude from analysis
+#pdf("./figures/Supplemental_Figures/Fig.S3C.pdf", height = 10, width = 10)
+par(mfrow = c(4,5))
+
+for(i in 1:19) {
+  
+  bioclim_layer[i] <- paste('bio', i, sep = "")
+  
+  hist(bioclim.vars[,bioclim_layer[i]],
+       main = bioclim_layer[i],
+       xlab = 'value')
+}
+
+#dev.off()
+
+#### get principal components of climatic data
+
+drop.columns.pca.clim <- c("plant.ID", "Site", "lat", "lon", "species") #select columns to exclude from analysis
 bioclim.pca <- bioclim.vars[,!(names(bioclim.vars) %in% drop.columns.pca.clim)] #drop columns with the aforementioned names
 
 (fit.clim <- princomp(bioclim.pca))
@@ -90,36 +107,28 @@ pc.sum <- Reduce("+",fit.clim[[1]]) #get sum of PC scores
 fit.clim[[1]][1] / pc.sum #first PC explains 83.6% of variance
 fit.clim[[1]][2] / pc.sum #second PC explains 13.3% of variance
 
-library(factoextra)
-
-fviz_pca_var(fit.clim, col.var = "black")
-fviz_pca_biplot(fit.clim)
-fviz_pca_ind(fit.clim)
-
-pdf('./figures/Supplemental_Figures/Fig.S1.pdf', height = 5, width = 5)
-fviz_pca_biplot(fit.clim)
-dev.off()
-
 bioclim.vars$PC1 <- fit.clim$scores[,1] #extract first principal component and append to original df
 bioclim.vars$PC2 <- fit.clim$scores[,2] #same for second PC
+bioclim.vars$PC3 <- fit.clim$scores[,3] #and third PC
 
 #add island/mainland column
 
 islands <- c("Santa Rosa", "Santa Cruz", "Catalina")
 
-bioclim.vars$IM <- ifelse(bioclim.vars$Site %in% islands, "Island", "Mainland")
+bioclim.vars$IM <- ifelse(bioclim.vars$Site %in% islands, "Island", 
+                          ifelse(bioclim.vars$Site %in% c('RSA','SBBG'), 'Botanical Garden', "Mainland"))
 
-pdf("./figures/Supplemental_Figures/Fig.S1b.pdf", height = 5, width = 7)
+#pdf("./figures/Supplemental_Figures/Fig.S3A.pdf", height = 5, width = 7)
 ggplot(bioclim.vars, aes(x = PC1, y = PC2*-1, pch = Site, fill = IM))+
-  geom_point(size = 5, col = 'black')+
+  geom_point(size = 5)+
   theme_bw(base_size = 16)+
   xlab('PC1 (83.6%)')+
   ylab('PC2 (13.3%)')+
-  scale_shape_manual(values = c(c(23, 21:25)))+
+  scale_shape_manual(values = c(21,22,23,21,22,23))+
   scale_fill_manual(values = c('blue','red'), guide = 'none')+
   theme(legend.position = 'right')+
   theme(axis.text = element_blank())
-dev.off()
+#dev.off()
   
 #annotate('text',x=-300,y=-175,label='Catalina',color = 'blue',size=5)
   #annotate('text',x=-625,y=90,label='Santa Cruz',color = 'blue',size=5, angle = 60)+
@@ -128,4 +137,47 @@ dev.off()
   #annotate('text',x=500,y=50,label='Santa Monicas',color = 'red',size=5)+
   #annotate('text',x=900,y=0,label='Stunt Ranch',color = 'red',size=5)
 
-leaf.data <- merge(bioclim.vars[,c(1,3:4,25:26)], raw.dat, by = "plant.ID")
+library(factoextra)
+
+fviz_pca_var(fit.clim, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+fviz_pca_biplot(fit.clim)
+fviz_pca_ind(fit.clim, repel = T)
+
+pdf('./figures/Supplemental_Figures/Fig.S3B.pdf', height = 5, width = 5)
+fviz_pca_var(fit.clim, col.var = "contrib", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = T)+
+  ggtitle(label = element_blank())+
+  theme_classic(base_size = 14)+
+  labs(color = 'Contribution')+
+  theme(legend.position = c(0.8,0.5))
+dev.off()
+
+#plot bio4
+
+sites<-read.csv("./data_files/site_coordinates.csv",row.names=NULL,header = T) #read in coordinates for site-level locations
+
+map_extent <- extent(c(-121, -117, 32.5, 35))
+
+bioclim_data_plot <- crop(x = r2, y = map_extent)
+
+plot(bioclim_data_plot[[4]])
+points(x = -sites$long, y = sites$lat, pch = 20, col = 'black', cex = 1)
+
+pdf('./figures/Supplemental_Figures/Fig.S4.pdf', height = 16, width = 16)
+
+par(mfrow = c(4,5))
+par(bty = 'n')
+
+for(i in 1:19) {
+  
+bioclim_layer[i] <- paste('bio', i, sep = "")
+  
+ plot(bioclim_data_plot[[i]],
+      main = bioclim_layer[i],
+      axes = F)
+ points(x = -sites$long, y = sites$lat, pch = 20, col = 'black', cex = 1)
+  
+}
+
+dev.off()
+

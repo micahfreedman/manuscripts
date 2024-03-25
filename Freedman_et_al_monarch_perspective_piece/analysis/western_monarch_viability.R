@@ -163,11 +163,11 @@ cor.test(t(kem1$states)[1:30], t(kem1$states)[6:35])
 
 western_abundance <- data.frame("year" = years, "abundance" = as.vector(kem1$states), "abundance_scaled" = as.vector(scale_factor*exp(kem1$states)),"LI" = as.vector(scale_factor*exp(kem1.LI)), "UI" = scale_factor*exp(as.vector(kem1.UI)), "source" = rep("Schutlz", 36))
 
-write.csv(western_abundance, file = '~/Desktop/god_never_again.csv', row.names = F)
+write.csv(western_abundance, file = '~/Desktop/temp_output.csv', row.names = F)
 
-### append data from 2017-2019 to this
+### append data from 2017-2021 to this
 
-wab_recent <- data.frame("year" = c(2017,2018,2019,2020), "abundance" = rep(NA, 4), "abundance_scaled" = c(0.192, 0.027, 0.029, 0.002),"LI" = rep(NA,4), "UI" = rep(NA,4), "source" = rep("Xerces", 4))
+wab_recent <- data.frame("year" = c(2017,2018,2019,2020,2021), "abundance" = rep(NA, 5), "abundance_scaled" = c(0.192, 0.027, 0.029, 0.002, 0.247),"LI" = rep(NA,5), "UI" = rep(NA,5), "source" = rep("Xerces", 5))
 
 western_abundance <- rbind(western_abundance, wab_recent)
 
@@ -206,7 +206,7 @@ eastern <- read.csv('~/Documents/GitHub/Sites/manuscripts/Freedman_et_al_monarch
               formula = y ~ splines::bs(x, 5))+
   scale_y_continuous(labels = scales::number_format(accuracy = 0.01,decimal.mark = '.'), limits = c(0,20), 
                      oob = scales::squish)+
-  scale_x_continuous(breaks = seq(1980, 2020, by = 5), lim = c(1980,2020)))
+  scale_x_continuous(breaks = seq(1980, 2020, by = 5), lim = c(1980,2021)))
 
 ggsave(file="~/Desktop/test2.pdf", plot=Fig1c, width=6, height=5)
 

@@ -124,17 +124,18 @@ cardenolides$Species <- recode_factor(cardenolides$Species, GOPH = 'G. physocarp
 
 #Make Figure 3 - within-species comparisons of leaf and wing concentrations
 
-#pdf('./figures/Figure3.pdf', height = 6, width = 6)
-ggplot(cardenolides, aes(x = Tissue, y = concentration, fill = Species))+
+pdf('./figures/Figure3.pdf', height = 6, width = 12)
+ggplot(cardenolides[!cardenolides$Sample %in% c('L261','572.1'),], 
+       aes(x = Tissue, y = concentration, fill = Species))+
   geom_boxplot(outlier.color = 'white', alpha = 0.3)+
-  geom_point(position = position_jitterdodge(1), pch = 21)+
+  geom_point(position = position_jitterdodge(1), pch = 21, size = 3)+
   scale_fill_manual(values = ascl.colors)+
-  facet_wrap(~Species, ncol = 3, scales = 'free')+
+  facet_wrap(~Species, nrow = 1, scales = 'free')+
   theme_light(base_size = 16)+
   theme(legend.position = 'none')+
   ylab('Cardenolide Concentration (mg/g)')+
   theme(strip.text = element_text(face = 'italic', size = 14))
-#dev.off()
+dev.off()
 
 #separately plot only species used in primary analysis (use this plot for presentation at Evolution meeting). Here, A. incarnata and A. fascicularis are omitted because of their consistently low levels of sequestered cardenolides.
 ggplot(cardenolides[!cardenolides$Species %in% c('A. incarnata','A. fascicularis'),], aes(x = Tissue, y = concentration, fill = Species))+
@@ -502,23 +503,26 @@ emm.populations <- as.data.frame(emmeans(sequestration.model, specs = ~Mon.Pop, 
 
 emm.populations
 
-#pdf('./figures/Figure5A.pdf', height = 8, width = 6)
-ggplot(emm.populations, aes(x = Mon.Pop, y = emmean))+
+emm.populations$gu <- ifelse(emm.populations$Mon.Pop=='Guam', 'guam', 'other')
+
+pdf('./figures/Figure5A.pdf', height = 8, width = 3)
+ggplot(emm.populations, aes(x = Mon.Pop, y = emmean, col = gu))+
   geom_point(size = 3)+
   geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.3, size = 1)+
-  theme_light(base_size = 24)+
+  theme_light(base_size = 16)+
   ylab('Estimated Marginal Mean - \nCardenolide Concentration (mg/g)')+
   xlab('Monarch Population')+
-  ggtitle(label = 'Overall sequestration')+
-  theme(legend.title = element_blank(), legend.position = 'bottom')+
+  ggtitle(label = 'Overall\nsequestration')+ theme(plot.title = element_text(hjust = 0.5))+
+  scale_color_manual(values = c('mediumorchid','black'))+
+  theme(legend.position = 'none')+
   theme(axis.text.x = element_text(angle = 75, hjust = 1))+
   annotate("text", x = 1, y = 8.2, label = "A", size = 6)+
   annotate("text", x = 2, y = 8.5, label = "A", size = 6)+
   annotate("text", x = 3, y = 8.7, label = "A", size = 6)+
-  annotate("text", x = 4, y = 7.5, label = "A", size = 6)+
+  annotate("text", x = 4, y = 7.5, label = "A", size = 6, col = 'mediumorchid')+
   annotate("text", x = 5, y = 9, label = "A", size = 6)+
   annotate("text", x = 6, y = 7.7, label = "A", size = 6)
-#dev.off()
+dev.off()
 
 #plot values for ASCU from the above
 
@@ -528,27 +532,30 @@ emm.combos$sym.allo <- ifelse(emm.combos$Mon.Pop %in% c('Puerto Rico','Guam') &
                                        emm.combos$Species=='G. physocarpus', 'sympatric',
                                      ifelse(emm.combos$Mon.Pop=='E. N. America' & emm.combos$Species == 'A. syriaca', 'sympatric', ifelse(emm.combos$Mon.Pop=='W. N. America' & emm.combos$Species=='A. speciosa', 'sympatric', 'allopatric'))))
 
+emm.combos$gu <- ifelse(emm.combos$Mon.Pop=='Guam', 'guam', 'other')
+
 #Create Figure 5B, this time focusing only on marginal means from A. curassavica. Here the goal is to highlight that Guam is lower than all other populations on this host.
 
-#pdf('./figures/Figure5B.pdf', height = 8, width = 6)
-ggplot(emm.combos[emm.combos$Species=='A. curassavica',], aes(x = Mon.Pop, y = emmean))+
+pdf('./figures/Figure5B.pdf', height = 8, width = 3)
+ggplot(emm.combos[emm.combos$Species=='A. curassavica',], aes(x = Mon.Pop, y = emmean, col = gu))+
   geom_point(size = 3)+
   geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.3, size = 1)+
-  theme_light(base_size = 24)+
+  theme_light(base_size = 16)+
   ylab('Estimated Marginal Mean - \nCardenolide Concentration (mg/g)')+
   xlab('Monarch Population')+
-  ggtitle(label = 'A. curassavica')+
+  ggtitle(label = 'A. curassavica')+ theme(plot.title = element_text(hjust = 0.5))+
   #scale_color_manual(values = c('black','red'))+
+  scale_color_manual(values = c('mediumorchid','black'))+
   theme(plot.title = element_text(hjust = 0.5, face = 'italic'))+
   annotate("text", x = 5, y = 18, label = "A", size = 6)+
   annotate("text", x = 2, y = 16, label = "AB", size = 6)+
   annotate("text", x = 1, y = 16, label = "A", size = 6)+
-  annotate("text", x = 4, y = 11.5, label = "B", size = 6)+
+  annotate("text", x = 4, y = 11.8, label = "B", size = 6, col = 'mediumorchid')+
   annotate("text", x = 3, y = 14, label = "AB", size = 6)+
   annotate("text", x = 6, y = 18, label = "A", size = 6)+
   theme(legend.position = 'none')+
   theme(axis.text.x = element_text(angle = 75, hjust = 1))
-#dev.off()
+dev.off()
 
 #for purposes of display, truncate values for lower confidence limits at 0
 
@@ -769,7 +776,7 @@ ASCU <- wing.cardenolides[wing.cardenolides$Species=='A. curassavica',]
 
 ASCU$adjusted_values <- ASCU$concentration / spp.leaf.means[spp.leaf.means$Species=='A. curassavica',][[2]]
 
-ASCU$guam <- ifelse(ASCU$Mon.Pop=='GU', 'Guam', 'Others')
+ASCU$guam <- ifelse(ASCU$Mon.Pop=='Guam', 'Guam', 'Others')
 
 aggregate(adjusted_values ~ guam, mean, data = ASCU)
 
