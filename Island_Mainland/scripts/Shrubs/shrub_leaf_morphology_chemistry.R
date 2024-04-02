@@ -9,10 +9,7 @@ library(ggplot2)
 library(lmerTest)
 library(ggeffects)
 
-
-setwd("~/Documents/GitHub/Sites/manuscripts/Island_Mainland/")
-
-leaf.data <- read.csv(file = "./data_files/chaparral_leaf_morphology.csv", header = T)
+leaf.data <- read.csv(file = "./data_files/Shrubs/Morphology/chaparral_leaf_morphology.csv", header = T)
 
 head(leaf.data) #dataframe with 5664 rows, each corresponding to a measurement from a single leaf
 
@@ -244,7 +241,7 @@ figS2a+
 
 #For this, first need to load in separate file that contains masses of pooled leaves
 
-masses <- read.csv(file = './data_files/shrub_leaf_masses.csv', head = T)
+masses <- read.csv(file = './data_files/Shrubs/Morphology/shrub_leaf_masses.csv', head = T)
 
 for( i in 1:nrow(masses)){
   masses$SLA.ID[i] <- paste(masses$Species[i], masses$Number[i], masses$Position[i], sep = "_")
@@ -448,7 +445,7 @@ figs8b+
 
 ###### Finally, create figure for cyanogenic glycosides
 
-cyanide <- read.csv(file = './data_files/cyanide_measurements.csv', header = T)
+cyanide <- read.csv(file = './data_files/Shrubs/Cyanide/cyanide_measurements.csv', header = T)
 
 head(cyanide)
 
@@ -635,7 +632,7 @@ anova(Herbivory.model)
 
 #first load Bowen and Van Vuren data
 
-bvv97 <- data.frame(readxl::read_xlsx('./data_files/Bowen and Van Vuren Effect Sizes.xlsx'))
+bvv97 <- data.frame(readxl::read_xlsx('./data_files/Shrubs/Bowen and Van Vuren Effect Sizes.xlsx'))
 
 #start with leaf area
 
@@ -776,3 +773,4 @@ ggplot(t_stat_combined, aes(x = Comparison, y = t.ratio, fill = Comparison))+
   theme(strip.text.x = element_text(size = 10, face = "italic"))+
   ylim(c(-10.5,10.5))
 #dev.off()
+

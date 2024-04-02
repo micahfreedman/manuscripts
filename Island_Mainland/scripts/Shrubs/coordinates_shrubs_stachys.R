@@ -1,7 +1,5 @@
 #### Script for creating mapping data for Channel Islands / mainland comparisons
 
-setwd('~/Documents/GitHub/Sites/manuscripts/Island_Mainland/')
-
 #load relevant libraries (some might not actually be needed?)
 
 library(rworldmap)
@@ -9,12 +7,9 @@ library(ggmap)
 library(maps)
 library(mapdata)
 library(stringr)
-library(rworldxtra)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(sf)
-library(rgdal)
-library(ggsn)
 library(cowplot)
 library(ggspatial)
 
@@ -22,7 +17,7 @@ library(ggspatial)
 
 #register_google(key = "api key here-M")  #one-time API key entry, required for using ggmap
 
-sat_california <- get_map(location = 'California', zoom = 6, maptype = 'hybrid')
+sat_california <- get_map(location = 'California', zoom = 6, maptype = 'hybrid') #note that this will not run without a valid API key
 
 #pdf(file = './figures/Fig1a1.pdf', height = 6, width = 6)  
 ggmap(sat_california)+
@@ -47,7 +42,7 @@ ggplot(data = world)+
   annotate("rect", xmin = -121, xmax = -117, ymin = 32.5, ymax = 35, col = 'red', fill = 'white', alpha = 0.2)
 #dev.off()  
 
-sites<-read.csv("./data_files/site_coordinates.csv",row.names=NULL,header = T) #read in coordinates for site-level locations
+sites<-read.csv("./data_files/Shrubs/Mapping/site_coordinates.csv",row.names=NULL,header = T) #read in coordinates for site-level locations
 
 sites$IM <- ifelse(sites$Site %in% c('Catalina','Santa_Cruz','Santa_Rosa'), 'island', 
                    ifelse(sites$Site %in% c('Rancho_Santa_Ana','Santa_Barbara'), 'common garden', 'mainland'))
@@ -81,8 +76,8 @@ ggplot(data = world) +
 
 #### now create separate maps for each individual site
 
-shrub.bearings <- read.csv(file="./data_files/shrubs_coordinates.csv",head=T) #load in plant coordinates
-leaf.data <- read.csv(file="./data_files/chaparral_leaf_morphology.csv") #also need to load in main dataset to get info on island ID for each plant
+shrub.bearings <- read.csv(file="./data_files/Shrubs/Mapping/shrubs_coordinates.csv",head=T) #load in plant coordinates
+leaf.data <- read.csv(file="./data_files/Shrubs/Morphology/chaparral_leaf_morphology.csv") #also need to load in main dataset to get info on island ID for each plant
 
 head(shrub.bearings) #need to split into separate lat/long columns; first remove the \xa1 that results from degree symbol
 
@@ -126,7 +121,7 @@ plant.mapping$species <- gsub('_', '', spp2)
 
 #get map of all plants from Catalina
 
-catalina.map <- get_map(location = c(-118.45,33.4), maptype = "satellite", source = "google", zoom = 11) #just manually enter points based on mean location of sampled plants
+catalina.map <- get_map(location = c(-118.45,33.4), maptype = "satellite", source = "google", zoom = 11) #just manually enter points based on mean location of sampled plants; once again, won't work without an API key
 
 table(with(plant.mapping[plant.mapping$Site == "Catalina",], species)) #all five species present
 
@@ -263,9 +258,9 @@ dev.off()
 
 ###### Finally, get map for Stachys sampling locations
 
-stachys_coordinates <- read.csv('./data_files/stachys_coordinates.csv')
+stachys_coordinates <- read.csv('./data_files/Stachys/Setup/stachys_coordinates.csv')
 
-pdf('./figures/FigSB_map.pdf', height = 6, width = 6)
+#pdf('./figures/FigSB_map.pdf', height = 6, width = 6)
 ggplot(data = world) +
   geom_sf(fill = "antiquewhite1") +
   geom_point(data = stachys_coordinates, aes(x = -long, y = lat, fill = Site), size = 4, pch = 21)+
@@ -282,26 +277,6 @@ ggplot(data = world) +
   annotate("text", x = -120.2, y = 34.35, label = "El Capitan", cex = 4, col = 'orange')+
   annotate("text", x = -118.8, y = 33.95, label = "Zuma", cex = 4, col = 'gold')+
   annotate("text", x = -119.2, y = 34.66, label = "Santa Barbara\nBotanic Garden", cex = 4, col = 'black')
-dev.off()
+#dev.off()
   
-
-
-
-ggplot(data = usa) +
-  geom_sf(fill = "antiquewhite1") +
-  geom_point(data = stachys_coordinates, aes(x = -long, y = lat, fill = Site), size = 4, pch = 21)+
-  scale_fill_manual(values = c('orange','darkorange4','black','blue','red','darkblue','gold'))+
-  coord_sf(xlim = c(-121, -118), ylim = c(33, 35)) +
-  theme(panel.grid.major = element_line(colour = gray(0.9), linetype = "dashed",size = 0.5), 
-        panel.background = element_rect(fill = "aliceblue"),panel.border = element_rect(fill = NA))+
-  theme(legend.position = 'none', axis.title = element_blank())+
-  annotate("text", x= -119.3, y= 33.85, label = "Santa Cruz", cex = 4, col = 'blue')+
-  annotate("text", x = -120.5, y = 33.8, label = "Santa Rosa", cex = 4, col = 'darkblue')+
-  annotate("text", x = -120.3, y = 34.7, label = "Gaviota", cex = 4, col = 'darkorange4')+
-  annotate("text", x = -118.6, y = 34.3, label = "Santa Monica Mtns.", cex = 4, col = 'red')+
-  annotate("text", x = -120.2, y = 34.35, label = "El Capitan", cex = 4, col = 'orange')+
-  annotate("text", x = -118.8, y = 33.95, label = "Zuma", cex = 4, col = 'gold')+
-  annotate("text", x = -119.2, y = 34.66, label = "Santa Barbara\nBotanic Garden", cex = 4, col = 'black')
-dev.off()
-
 ##########################################

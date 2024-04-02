@@ -2,10 +2,13 @@ library(plyr)
 library(stringr)
 library(sp)
 library(rgdal)
+library(raster)
 
 ###### Script for getting BioClim data for shrubs sampled in island/mainland comparisons
 
-shrub.bearings = read.csv(file="~/Downloads/shrubs_coordinates.csv",head=T) #load in plant coordinates
+shrub.bearings <- read.csv(file="./data_files/Shrubs/Mapping/shrubs_coordinates.csv",head=T) #load in plant coordinates
+
+leaf.data <- read.csv(file = './data_files/Shrubs/Morphology/chaparral_leaf_morphology.csv') #also need to load leaf data for indexing purposes
 
 head(shrub.bearings) #need to split into separate lat/long columns; first remove the \xa1 that results from degree symbol
 
@@ -35,6 +38,11 @@ plant.ID <- paste(plant.spp, plant.num, sep = "_")
 shrub.bearings$plant.ID <- plant.ID
 shrub.bearings$species <- plant.spp
 
+leaf.data$Species <- revalue(leaf.data$Species, c("Ceanothus_megacarpus" = "Ceanothus", "Cercocarpus_betuloides" = "Cercocarpus", "Dendromecon_harfordii" = "Dendromecon", "Dendromecon_rigida"= "Dendromecon", "Heteromeles_arbutifolia" = "Heteromeles", "Prunus_ilicifolia" = "Prunus"))
+
+for( i in 1:nrow(leaf.data))
+  leaf.data$plant.ID[i] = paste(leaf.data$Species[i], leaf.data$Plant[i], sep="_")
+
 leaf.data.spatial <- merge(shrub.bearings, leaf.data, by = "plant.ID")
 
 df1=aggregate(lat ~ plant.ID + Site, data = leaf.data.spatial, FUN = mean)
@@ -54,8 +62,6 @@ crs.geo<-CRS("+init=epsg:4326")
 proj4string(plant.mapping.sp) <- crs.geo #this is doing the same things as the "coordinates" function and is just combining lat and lon into a readable single entity for spatial mapping objects
 
 ##### first, add in bioclim variables
-
-library(raster)
 
 r <- getData("worldclim",var="bio",res=2.5)
 
@@ -113,7 +119,7 @@ bioclim.vars$PC3 <- fit.clim$scores[,3] #and third PC
 
 #add island/mainland column
 
-islands <- c("Santa Rosa", "Santa Cruz", "Catalina")
+islands <- c("Santa_Rosa", "Santa_Cruz", "Catalina")
 
 bioclim.vars$IM <- ifelse(bioclim.vars$Site %in% islands, "Island", 
                           ifelse(bioclim.vars$Site %in% c('RSA','SBBG'), 'Botanical Garden', "Mainland"))
@@ -143,14 +149,14 @@ fviz_pca_var(fit.clim, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B80
 fviz_pca_biplot(fit.clim)
 fviz_pca_ind(fit.clim, repel = T)
 
-pdf('./figures/Supplemental_Figures/Fig.S3B.pdf', height = 5, width = 5)
+#pdf('./figures/Supplemental_Figures/Fig.S3B.pdf', height = 5, width = 5)
 fviz_pca_var(fit.clim, col.var = "contrib", 
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = T)+
   ggtitle(label = element_blank())+
   theme_classic(base_size = 14)+
   labs(color = 'Contribution')+
   theme(legend.position = c(0.8,0.5))
-dev.off()
+#dev.off()
 
 #plot bio4
 
@@ -163,7 +169,7 @@ bioclim_data_plot <- crop(x = r2, y = map_extent)
 plot(bioclim_data_plot[[4]])
 points(x = -sites$long, y = sites$lat, pch = 20, col = 'black', cex = 1)
 
-pdf('./figures/Supplemental_Figures/Fig.S4.pdf', height = 16, width = 16)
+#pdf('./figures/Supplemental_Figures/Fig.S4.pdf', height = 16, width = 16)
 
 par(mfrow = c(4,5))
 par(bty = 'n')
